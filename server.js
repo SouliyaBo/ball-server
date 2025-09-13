@@ -2,6 +2,7 @@ const express = require('express');
 const path = require('path');
 const PuppeteerFootballClient = require('./PuppeteerFootballClient');
 const PuppeteerProgramScraper = require('./PuppeteerProgramScraper');
+const PuppeteerDataExtractor = require('./PuppeteerDataExtractor');
 
 const app = express();
 const PORT = 3000;
@@ -17,6 +18,7 @@ app.use(express.json());
 // สร้าง instances
 const apiClient = new PuppeteerFootballClient();
 const programScraper = new PuppeteerProgramScraper();
+const dataExtractor = new PuppeteerDataExtractor();
 
 // Route สำหรับหน้าหลัก
 app.get('/', (req, res) => {
@@ -26,6 +28,63 @@ app.get('/', (req, res) => {
 // Route สำหรับหน้าโปรแกรมบอล
 app.get('/program', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'program.html'));
+});
+
+// ===== New JSON Data Extraction Routes =====
+// Route สำหรับดึงข้อมูลแมตช์เป็น JSON วันนี้
+app.get('/api/data/matches/today', async (req, res) => {
+    try {
+        console.log('📊 กำลังดึงข้อมูลแมตช์วันนี้เป็น JSON...');
+        const jsonData = await dataExtractor.extractMatchData();
+        console.log(`✅ ดึงข้อมูล JSON สำเร็จ: ${jsonData.totalMatches} แมตช์`);
+        res.json(jsonData);
+    } catch (error) {
+        console.error('❌ Error extracting today JSON data:', error.message);
+        res.status(500).json({
+            success: false,
+            error: 'ไม่สามารถดึงข้อมูลแมตช์วันนี้เป็น JSON ได้',
+            message: error.message,
+            matches: []
+        });
+    }
+});
+
+// Route สำหรับดึงข้อมูลแมตช์เป็น JSON ตามวันที่
+app.get('/api/data/matches/date/:offset', async (req, res) => {
+    try {
+        const dateOffset = parseInt(req.params.offset) || 0;
+        console.log(`📊 กำลังดึงข้อมูลแมตช์เป็น JSON สำหรับ offset ${dateOffset} วัน...`);
+        const jsonData = await dataExtractor.extractMatchesByDate(dateOffset);
+        console.log(`✅ ดึงข้อมูล JSON สำเร็จ: ${jsonData.totalMatches} แมตช์`);
+        res.json(jsonData);
+    } catch (error) {
+        console.error('❌ Error extracting JSON data by date:', error.message);
+        res.status(500).json({
+            success: false,
+            error: 'ไม่สามารถดึงข้อมูลแมตช์เป็น JSON ได้',
+            message: error.message,
+            matches: []
+        });
+    }
+});
+
+// Route สำหรับดึงข้อมูลแมตช์เป็น JSON ข้างหน้า
+app.get('/api/data/matches/upcoming', async (req, res) => {
+    try {
+        const days = parseInt(req.query.days) || 1;
+        console.log(`📊 กำลังดึงข้อมูลแมตช์เป็น JSON สำหรับ ${days} วันข้างหน้า...`);
+        const jsonData = await dataExtractor.extractMatchesByDate(days);
+        console.log(`✅ ดึงข้อมูล JSON สำเร็จ: ${jsonData.totalMatches} แมตช์`);
+        res.json(jsonData);
+    } catch (error) {
+        console.error('❌ Error extracting upcoming JSON data:', error.message);
+        res.status(500).json({
+            success: false,
+            error: 'ไม่สามารถดึงข้อมูลแมตช์ข้างหน้าเป็น JSON ได้',
+            message: error.message,
+            matches: []
+        });
+    }
 });
 
 // ===== Program Scraper Routes (HTML Direct) =====

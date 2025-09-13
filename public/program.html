@@ -388,7 +388,159 @@
             }
         }
 
-        /* เพิ่มเอฟเฟกต์พิเศษ */
+        /* CSS สำหรับ JSON Data Display */
+        .matches-container {
+            padding: 0;
+            margin: 0;
+        }
+
+        .league-section {
+            margin-bottom: 30px;
+        }
+
+        .league-title {
+            color: white;
+            font-size: 18px;
+            font-weight: 600;
+            padding: 12px 20px;
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 8px 8px 0 0;
+            border-bottom: 2px solid #6366f1;
+            margin: 0 0 10px 0;
+        }
+
+        .matches-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .match-item {
+            background: #374151;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: all 0.2s ease;
+        }
+
+        .match-item:hover {
+            background: #4b5563;
+            border-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(-1px);
+        }
+
+        .match-time {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            min-width: 100px;
+            gap: 2px;
+        }
+
+        .match-date {
+            color: #9ca3af;
+            font-size: 12px;
+            font-weight: 400;
+        }
+
+        .match-hour {
+            color: white;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .match-teams {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex: 1;
+            gap: 20px;
+        }
+
+        .team {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 120px;
+        }
+
+        .away-team {
+            justify-content: flex-end;
+        }
+
+        .home-team {
+            justify-content: flex-start;
+        }
+
+        .team-name {
+            color: white;
+            font-size: 14px;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .team-logo {
+            width: 24px;
+            height: 24px;
+            object-fit: contain;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 2px;
+        }
+
+        .match-vs {
+            color: #fbbf24;
+            font-weight: 600;
+            font-size: 12px;
+            text-transform: uppercase;
+            min-width: 30px;
+            text-align: center;
+        }
+
+        .match-vs a {
+            color: #fbbf24;
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+
+        .match-vs a:hover {
+            color: #f59e0b;
+        }
+
+        .match-actions {
+            display: flex;
+            align-items: center;
+            min-width: 80px;
+            justify-content: flex-end;
+        }
+
+        .match-link {
+            color: #60a5fa;
+            text-decoration: none;
+            font-size: 12px;
+            padding: 4px 8px;
+            border: 1px solid #60a5fa;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+
+        .match-link:hover {
+            background: #60a5fa;
+            color: white;
+        }
+
+        .no-matches {
+            text-align: center;
+            padding: 40px;
+            color: #9ca3af;
+            font-size: 16px;
+        }
+
         .header::before {
             content: '';
             position: absolute;
@@ -416,17 +568,20 @@
     </div>
 
     <div class="controls">
-        <button class="control-btn active" onclick="loadTodayProgram()" data-days="0">
+        <button class="control-btn active" onclick="loadTodayMatches()" data-days="0">
             📅 วันนี้
         </button>
-        <button class="control-btn" onclick="loadUpcomingProgram(1)" data-days="1">
+        <button class="control-btn" onclick="loadUpcomingMatches(1)" data-days="1">
             📆 พรุ่งนี้
         </button>
-        <button class="control-btn" onclick="loadUpcomingProgram(2)" data-days="2">
+        <button class="control-btn" onclick="loadUpcomingMatches(2)" data-days="2">
             📅 มะรืนนี้
         </button>
-        <button class="control-btn" onclick="loadUpcomingProgram(3)" data-days="3">
+        <button class="control-btn" onclick="loadUpcomingMatches(3)" data-days="3">
             🔮 3 วันข้างหน้า
+        </button>
+        <button class="control-btn" onclick="loadTodayProgram()" data-type="html">
+            🌐 HTML Mode
         </button>
     </div>
 
@@ -462,14 +617,21 @@
             `;
         }
 
-        function updateActiveButton(days) {
+        function updateActiveButton(identifier) {
             // ลบ active class จากปุ่มทั้งหมด
             document.querySelectorAll('.control-btn').forEach(btn => {
                 btn.classList.remove('active');
             });
 
             // เพิ่ม active class ให้ปุ่มที่ถูกต้อง
-            const targetBtn = document.querySelector(`[data-days="${days}"]`);
+            let targetBtn = null;
+
+            if (identifier === 'html') {
+                targetBtn = document.querySelector(`[data-type="html"]`);
+            } else {
+                targetBtn = document.querySelector(`[data-days="${identifier}"]`);
+            }
+
             if (targetBtn) {
                 targetBtn.classList.add('active');
             }
@@ -650,10 +812,140 @@
             console.log('✅ ลบ responsive duplicates เสร็จสิ้น');
         }
 
-        // ฟังก์ชันสำหรับโหลดข้อมูล
-        async function loadTodayProgram() {
+        // ฟังก์ชันสำหรับโหลดข้อมูลแบบ JSON
+        async function loadTodayMatches() {
             showLoading();
             updateActiveButton(0);
+            try {
+                const response = await fetch('/api/data/matches/today');
+                const data = await response.json();
+                console.log("data::: ", data)
+                displayJsonData(data);
+            } catch (error) {
+                showError('ไม่สามารถโหลดข้อมูลแมตช์วันนี้ได้: ' + error.message);
+            }
+        }
+
+        async function loadUpcomingMatches(days) {
+            showLoading();
+            updateActiveButton(days);
+            try {
+                const response = await fetch(`/api/data/matches/date/${days}`);
+                const data = await response.json();
+                displayJsonData(data);
+            } catch (error) {
+                showError(`ไม่สามารถโหลดข้อมูลแมตช์ ${days} วันข้างหน้าได้: ` + error.message);
+            }
+        }
+
+        // ฟังก์ชันสำหรับแสดงข้อมูล JSON
+        function displayJsonData(data) {
+            hideLoading();
+            currentData = data;
+
+            const infoBar = document.getElementById('info-bar');
+            const contentDiv = document.getElementById('scraped-content');
+
+            if (!data || !data.success || !data.matches) {
+                showError(data.error || 'ไม่พบข้อมูลแมตช์');
+                return;
+            }
+
+            // แสดง info bar
+            infoBar.style.display = 'block';
+            infoBar.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span>📊 ข้อมูล JSON Mode: ${data.totalMatches} แมตช์</span>
+                    <span>🕒 อัปเดต: ${new Date(data.extractedAt).toLocaleString('th-TH')}</span>
+                </div>
+            `;
+
+            // สร้าง HTML จากข้อมูล JSON
+            const matchesHtml = createMatchesHtml(data.matches);
+            contentDiv.innerHTML = matchesHtml;
+
+            console.log('✅ แสดงข้อมูล JSON เรียบร้อย');
+        }
+
+        // ฟังก์ชันสร้าง HTML จากข้อมูล JSON
+        function createMatchesHtml(matches) {
+            if (!matches || matches.length === 0) {
+                return '<div class="no-matches">ไม่พบข้อมูลแมตช์</div>';
+            }
+
+            // จัดกลุ่มตามลีก (ถ้ามี)
+            const groupedMatches = {};
+            matches.forEach(match => {
+                console.log("match::: ", match)
+                const league = match.league || 'ไม่ระบุลีก';
+                if (!groupedMatches[league]) {
+                    groupedMatches[league] = [];
+                }
+                groupedMatches[league].push(match);
+            });
+
+            let html = '<div class="matches-container">';
+
+            Object.keys(groupedMatches).forEach(league => {
+                html += `
+                    <div class="league-section">
+                        <h3 class="league-title">${league} (${groupedMatches[league].length})</h3>
+                        <div class="matches-list">
+                `;
+
+                groupedMatches[league].forEach(match => {
+                    html += createMatchHtml(match);
+                });
+
+                html += `
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += '</div>';
+            return html;
+        }
+
+        // ฟังก์ชันสร้าง HTML สำหรับแมตช์แต่ละคู่
+        function createMatchHtml(match) {
+            const homeTeam = match.homeTeam || {};
+            const awayTeam = match.awayTeam || {};
+
+            return `
+                <div class="match-item" data-match-id="${match.matchId || match.id}">
+                    <div class="match-time">
+                        <div class="match-date">${match.date || ''}</div>
+                        <div class="match-hour">${match.time || ''}</div>
+                    </div>
+
+                    <div class="match-teams">
+                        <div class="team away-team">
+                            <span class="team-name">${awayTeam.name || ''}</span>
+                            ${awayTeam.logo ? `<img src="${awayTeam.logo}" alt="${awayTeam.alt || awayTeam.name}" class="team-logo">` : ''}
+                        </div>
+
+                        <div class="match-vs">
+                            ${match.matchUrl ? `<a href="${match.matchUrl}" target="_blank" rel="noopener noreferrer">vs</a>` : 'vs'}
+                        </div>
+
+                        <div class="team home-team">
+                            ${homeTeam.logo ? `<img src="${homeTeam.logo}" alt="${homeTeam.alt || homeTeam.name}" class="team-logo">` : ''}
+                            <span class="team-name">${homeTeam.name || ''}</span>
+                        </div>
+                    </div>
+
+                    <div class="match-actions">
+                        ${match.matchUrl ? `<a href="${match.matchUrl}" class="match-link" target="_blank" rel="noopener noreferrer">ดูรายละเอียด</a>` : ''}
+                    </div>
+                </div>
+            `;
+        }
+
+        // ฟังก์ชันสำหรับ HTML scraping mode (เก็บไว้เพื่อเปรียบเทียบ)
+        async function loadTodayProgram() {
+            showLoading();
+            updateActiveButton('html');
             try {
                 const response = await fetch('/api/program/today');
                 const data = await response.json();
@@ -687,9 +979,9 @@
             }
         }
 
-        // โหลดข้อมูลวันนี้เมื่อเปิดหน้าเว็บ
+        // โหลดข้อมูลวันนี้เมื่อเปิดหน้าเว็บ (ใช้ JSON mode เป็นค่าเริ่มต้น)
         document.addEventListener('DOMContentLoaded', function () {
-            loadTodayProgram();
+            loadTodayMatches();
         });
 
         // เพิ่ม keyboard shortcuts
@@ -698,19 +990,23 @@
                 switch (e.key) {
                     case '0':
                         e.preventDefault();
-                        loadTodayProgram();
+                        loadTodayMatches();
                         break;
                     case '1':
                         e.preventDefault();
-                        loadUpcomingProgram(1);
+                        loadUpcomingMatches(1);
                         break;
                     case '2':
                         e.preventDefault();
-                        loadUpcomingProgram(2);
+                        loadUpcomingMatches(2);
                         break;
                     case '3':
                         e.preventDefault();
-                        loadUpcomingProgram(3);
+                        loadUpcomingMatches(3);
+                        break;
+                    case 'h':
+                        e.preventDefault();
+                        loadTodayProgram();
                         break;
                 }
             }
