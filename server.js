@@ -20,6 +20,30 @@ const apiClient = new PuppeteerFootballClient();
 const programScraper = new PuppeteerProgramScraper();
 const dataExtractor = new PuppeteerDataExtractor();
 
+// เพิ่ม simple cache
+const dataCache = new Map();
+const CACHE_DURATION = 2 * 60 * 1000; // 2 นาที
+
+function getCacheKey(endpoint, params) {
+    return `${endpoint}_${JSON.stringify(params)}`;
+}
+
+function getCachedData(key) {
+    const cached = dataCache.get(key);
+    if (cached && (Date.now() - cached.timestamp) < CACHE_DURATION) {
+        console.log(`🚀 ใช้ข้อมูลจาก cache: ${key}`);
+        return cached.data;
+    }
+    return null;
+}
+
+function setCachedData(key, data) {
+    dataCache.set(key, {
+        data: data,
+        timestamp: Date.now()
+    });
+}
+
 // Route สำหรับหน้าหลัก
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
@@ -34,9 +58,33 @@ app.get('/program', (req, res) => {
 // Route สำหรับดึงข้อมูลแมตช์เป็น JSON วันนี้
 app.get('/api/data/matches/today', async (req, res) => {
     try {
+        const cacheKey = getCacheKey('matches_today', {});
+        const cachedResult = getCachedData(cacheKey);
+
+        if (cachedResult) {
+            return res.json(cachedResult);
+        }
+
         console.log('📊 กำลังดึงข้อมูลแมตช์วันนี้เป็น JSON...');
         const jsonData = await dataExtractor.extractMatchData();
         console.log(`✅ ดึงข้อมูล JSON สำเร็จ: ${jsonData.totalMatches} แมตช์`);
+
+        // เก็บใน cache
+        setCachedData(cacheKey, jsonData);
+
+        // Debug: แสดงตัวอย่างข้อมูลแมตช์แรก
+        if (jsonData.matches && jsonData.matches.length > 0) {
+            const firstMatch = jsonData.matches[0];
+            console.log('🔍 Debug ตัวอย่างแมตช์แรก:', {
+                league: firstMatch.league,
+                date: firstMatch.date,
+                time: firstMatch.time,
+                dateTime: firstMatch.dateTime,
+                homeTeam: firstMatch.homeTeam?.name,
+                awayTeam: firstMatch.awayTeam?.name
+            });
+        }
+
         res.json(jsonData);
     } catch (error) {
         console.error('❌ Error extracting today JSON data:', error.message);
@@ -53,9 +101,20 @@ app.get('/api/data/matches/today', async (req, res) => {
 app.get('/api/data/matches/date/:offset', async (req, res) => {
     try {
         const dateOffset = parseInt(req.params.offset) || 0;
+        const cacheKey = getCacheKey('matches_date', { offset: dateOffset });
+        const cachedResult = getCachedData(cacheKey);
+
+        if (cachedResult) {
+            return res.json(cachedResult);
+        }
+
         console.log(`📊 กำลังดึงข้อมูลแมตช์เป็น JSON สำหรับ offset ${dateOffset} วัน...`);
         const jsonData = await dataExtractor.extractMatchesByDate(dateOffset);
         console.log(`✅ ดึงข้อมูล JSON สำเร็จ: ${jsonData.totalMatches} แมตช์`);
+
+        // เก็บใน cache
+        setCachedData(cacheKey, jsonData);
+
         res.json(jsonData);
     } catch (error) {
         console.error('❌ Error extracting JSON data by date:', error.message);

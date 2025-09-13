@@ -33,34 +33,31 @@ class PuppeteerDataExtractor {
         try {
             await this.init();
 
-            // ปิด page เก่าและสร้างใหม่เพื่อให้แน่ใจ
-            if (this.page) {
-                await this.page.close();
-                this.page = null;
+            // ใช้ page เดิมถ้ามี แทนการปิดและสร้างใหม่
+            if (!this.page) {
+                this.page = await this.browser.newPage();
+
+                // ตั้งค่า User Agent
+                await this.page.setUserAgent('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
+
+                // ตั้งค่า viewport
+                await this.page.setViewport({ width: 1920, height: 1080 });
             }
 
-            this.page = await this.browser.newPage();
-
-            // ตั้งค่า User Agent
-            await this.page.setUserAgent('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
-
-            // ตั้งค่า viewport
-            await this.page.setViewport({ width: 1920, height: 1080 });
-
-            // ตั้งค่า timeout
-            await this.page.setDefaultNavigationTimeout(30000);
-            await this.page.setDefaultTimeout(30000);
+            // ตั้งค่า timeout ให้เร็วขึ้น
+            await this.page.setDefaultNavigationTimeout(15000);
+            await this.page.setDefaultTimeout(15000);
 
             console.log(`📊 กำลังดึงข้อมูลแมตช์จาก: ${url}`);
 
-            // เข้าสู่หน้าเว็บ
+            // เข้าสู่หน้าเว็บ - ใช้ domcontentloaded แทน networkidle2
             await this.page.goto(url, {
-                waitUntil: 'networkidle2',
-                timeout: 30000
+                waitUntil: 'domcontentloaded',
+                timeout: 15000
             });
 
-            // รอให้เนื้อหาโหลดเสร็จ
-            await new Promise(resolve => setTimeout(resolve, 5000));
+            // ลดเวลารอจาก 5 วินาที เหลือ 2 วินาที
+            await new Promise(resolve => setTimeout(resolve, 2000));
 
             // ดึงข้อมูลแมตช์ทั้งหมด
             const matchesData = await this.page.evaluate(() => {
@@ -159,33 +156,107 @@ class PuppeteerDataExtractor {
 
                 function extractMatchFromElement(element, leagueName, matchId) {
                     try {
-                        // ดึงข้อมูลวันที่และเวลา
+                        // ดึงข้อมูลวันที่และเวลา - วิธีใหม่ที่ครอบคลุมมากขึ้น
                         let dateTime = '';
                         let date = '';
                         let time = '';
 
-                        // ค้นหาจากหลายๆ selector
-                        const timeSelectors = [
-                            '.text-gray-400',
-                            '.text-slate-400',
-                            '.text-xs',
-                            '.text-sm',
-                            '[class*="text-gray"]',
-                            '[class*="text-slate"]'
-                        ];
+                        // วิธีที่ 1: ค้นหาจาก element ที่อยู่ข้างๆ หรือข้างบน
+                        let searchElements = [];
 
-                        for (let selector of timeSelectors) {
-                            const timeElement = element.closest('div').parentElement.querySelector(selector);
-                            if (timeElement) {
-                                const text = timeElement.textContent || '';
-                                const dateMatch = text.match(/(\d{2}\/\d{2}\/\d{4})/);
-                                const timeMatch = text.match(/(\d{2}:\d{2})/);
+                        // หาจาก parent และ siblings
+                        let parentElement = element.parentElement;
+                        while (parentElement && searchElements.length < 20) {
+                            // เพิ่ม element ปัจจุบัน
+                            searchElements.push(parentElement);
 
-                                if (dateMatch || timeMatch) {
-                                    if (dateMatch) date = dateMatch[1];
-                                    if (timeMatch) time = timeMatch[1];
-                                    dateTime = text.trim();
+                            // เพิ่ม previous siblings
+                            let prev = parentElement.previousElementSibling;
+                            while (prev && searchElements.length < 20) {
+                                searchElements.push(prev);
+                                prev = prev.previousElementSibling;
+                            }
+
+                            // เพิ่ม next siblings
+                            let next = parentElement.nextElementSibling;
+                            while (next && searchElements.length < 20) {
+                                searchElements.push(next);
+                                next = next.nextElementSibling;
+                            }
+
+                            parentElement = parentElement.parentElement;
+                        }
+
+                        // ค้นหาในทุก element ที่รวบรวมมา
+                        for (let searchElement of searchElements) {
+                            // ค้นหาจาก text content โดยตรง
+                            const text = searchElement.textContent || '';
+
+                            // ลองหา pattern วันที่และเวลา
+                            const dateMatch = text.match(/(\d{1,2}\/\d{1,2}\/\d{4})/);
+                            const timeMatch = text.match(/(\d{1,2}:\d{2})/);
+
+                            if (dateMatch || timeMatch) {
+                                if (dateMatch) date = dateMatch[1];
+                                if (timeMatch) time = timeMatch[1];
+                                dateTime = text.trim();
+                                console.log(`พบวันที่เวลา: ${dateTime} (date: ${date}, time: ${time})`);
+                                break;
+                            }
+
+                            // ค้นหาจาก child elements ที่มี class เกี่ยวกับเวลา
+                            const timeElements = searchElement.querySelectorAll(`
+                                .text-gray-400, .text-slate-400, .text-gray-500, .text-slate-500,
+                                .text-xs, .text-sm, [class*="text-gray"], [class*="text-slate"],
+                                .opacity-70, .opacity-60, [class*="opacity"]
+                            `);
+
+                            for (let timeElement of timeElements) {
+                                const timeText = timeElement.textContent || '';
+                                const timeDateMatch = timeText.match(/(\d{1,2}\/\d{1,2}\/\d{4})/);
+                                const timeTimeMatch = timeText.match(/(\d{1,2}:\d{2})/);
+
+                                if (timeDateMatch || timeTimeMatch) {
+                                    if (timeDateMatch) date = timeDateMatch[1];
+                                    if (timeTimeMatch) time = timeTimeMatch[1];
+                                    dateTime = timeText.trim();
+                                    console.log(`พบวันที่เวลาใน child: ${dateTime} (date: ${date}, time: ${time})`);
                                     break;
+                                }
+                            }
+
+                            if (date || time) break;
+                        }
+
+                        // วิธีที่ 2: ถ้ายังไม่เจอ ลองค้นหาจาก DOM structure ที่เป็นไปได้
+                        if (!date && !time) {
+                            // ค้นหาจากโครงสร้าง HTML โดยทั่วไป
+                            const commonTimeSelectors = [
+                                'div:has(.hidden.sm\\:flex) .text-xs',
+                                'div:has(.hidden.sm\\:flex) .text-sm',
+                                'div:has(.hidden.sm\\:flex) [class*="text-gray"]',
+                                '.space-y-2 .text-gray-400',
+                                '.space-y-4 .text-gray-400'
+                            ];
+
+                            for (let selector of commonTimeSelectors) {
+                                try {
+                                    const timeElement = document.querySelector(selector);
+                                    if (timeElement) {
+                                        const timeText = timeElement.textContent || '';
+                                        const timeDateMatch = timeText.match(/(\d{1,2}\/\d{1,2}\/\d{4})/);
+                                        const timeTimeMatch = timeText.match(/(\d{1,2}:\d{2})/);
+
+                                        if (timeDateMatch || timeTimeMatch) {
+                                            if (timeDateMatch) date = timeDateMatch[1];
+                                            if (timeTimeMatch) time = timeTimeMatch[1];
+                                            dateTime = timeText.trim();
+                                            console.log(`พบวันที่เวลาจาก common selector: ${dateTime}`);
+                                            break;
+                                        }
+                                    }
+                                } catch (e) {
+                                    // ข้าม selector ที่ error
                                 }
                             }
                         }
@@ -240,7 +311,7 @@ class PuppeteerDataExtractor {
                         console.error('Error processing match element:', error);
                     }
                     return null;
-                }
+                } // ปิด function extractMatchFromElement
 
                 console.log(`🎯 รวมพบ ${matches.length} แมตช์`);
                 return matches;
@@ -295,11 +366,31 @@ class PuppeteerDataExtractor {
         try {
             const targetDate = new Date();
             targetDate.setDate(targetDate.getDate() + dateOffset);
+            const dateString = targetDate.toISOString().split('T')[0];
 
-            // สร้าง URL สำหรับวันที่เฉพาะ (ถ้า API รองรับ)
-            const url = `https://football-dw3.pages.dev/program/?date=${targetDate.toISOString().split('T')[0]}`;
+            console.log(`🗓️ กำลังดึงข้อมูลสำหรับวันที่: ${dateString} (offset: ${dateOffset})`);
 
-            return await this.extractMatchData(url);
+            // วิธีที่ 1: ลองใช้ URL parameter
+            let url = `https://football-dw3.pages.dev/program/?date=${dateString}`;
+            console.log(`🔗 URL ที่ลอง: ${url}`);
+
+            let result = await this.extractMatchDataWithDate(url, dateString);
+
+            // ตรวจสอบว่าได้ข้อมูลที่ถูกต้องไหม
+            if (result.matches && result.matches.length > 0) {
+                const sampleMatch = result.matches[0];
+                console.log(`🔍 ตัวอย่างข้อมูลที่ได้: วันที่=${sampleMatch.date}, เวลา=${sampleMatch.time}`);
+
+                // ถ้าข้อมูลที่ได้ไม่ตรงกับวันที่ที่ต้องการ
+                if (sampleMatch.date && !sampleMatch.date.includes(dateString.split('-')[2])) {
+                    console.log(`⚠️ ข้อมูลไม่ตรงกับวันที่ที่ต้องการ, ลองวิธีอื่น...`);
+
+                    // วิธีที่ 2: ลองใช้การคลิกปุ่มวันที่ในเว็บ
+                    result = await this.extractMatchDataByClickingDate(dateOffset);
+                }
+            }
+
+            return result;
         } catch (error) {
             console.error('❌ เกิดข้อผิดพลาดในการดึงข้อมูลตามวันที่:', error);
             return {
@@ -309,6 +400,221 @@ class PuppeteerDataExtractor {
                 extractedAt: new Date().toISOString()
             };
         }
+    }
+
+    async extractMatchDataWithDate(url, targetDateString) {
+        // ใช้ extractMatchData เดิมแต่เพิ่มการตรวจสอบ
+        const result = await this.extractMatchData(url);
+
+        // เพิ่มข้อมูลวันที่เป้าหมาย
+        if (result.success) {
+            result.targetDate = targetDateString;
+            result.requestedUrl = url;
+        }
+
+        return result;
+    }
+
+    async extractMatchDataByClickingDate(dateOffset) {
+        try {
+            console.log(`🖱️ ลองใช้วิธีคลิกปุ่มวันที่ (offset: ${dateOffset})`);
+
+            await this.init();
+
+            if (this.page) {
+                await this.page.close();
+                this.page = null;
+            }
+
+            this.page = await this.browser.newPage();
+            await this.page.setUserAgent('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
+            await this.page.setViewport({ width: 1920, height: 1080 });
+
+            console.log(`🌐 เข้าสู่หน้าเว็บหลัก...`);
+            await this.page.goto('https://football-dw3.pages.dev/program/', {
+                waitUntil: 'domcontentloaded',
+                timeout: 15000
+            });
+
+            // ลดเวลารอ
+            await new Promise(resolve => setTimeout(resolve, 1500));
+
+            // หาปุ่มวันที่ตาม offset
+            const targetDate = new Date();
+            targetDate.setDate(targetDate.getDate() + dateOffset);
+            const dayInThai = targetDate.getDate();
+
+            console.log(`🔍 ค้นหาปุ่มวันที่ ${dayInThai}...`);
+
+            // ลองคลิกปุ่มวันที่
+            const dateButtons = await this.page.$$eval('button', buttons =>
+                buttons.map(btn => ({
+                    text: btn.textContent.trim(),
+                    classList: btn.className
+                }))
+            );
+
+            console.log(`📱 พบปุ่ม: ${JSON.stringify(dateButtons.slice(0, 5))}`);
+
+            // หาปุ่มที่มีวันที่ที่ต้องการ
+            const targetButtonSelector = `button:contains("${dayInThai}")`;
+
+            try {
+                await this.page.evaluate((dayInThai) => {
+                    const buttons = Array.from(document.querySelectorAll('button'));
+                    const targetButton = buttons.find(btn =>
+                        btn.textContent.includes(String(dayInThai)) &&
+                        btn.textContent.includes('ก.ย.')
+                    );
+                    if (targetButton) {
+                        console.log(`🖱️ คลิกปุ่ม: ${targetButton.textContent}`);
+                        targetButton.click();
+                        return true;
+                    }
+                    return false;
+                }, dayInThai);
+
+                // รอให้ข้อมูลโหลด - ลดเวลารอ
+                await new Promise(resolve => setTimeout(resolve, 2000));
+
+                // ดึงข้อมูลหลังจากคลิก
+                return await this.extractCurrentPageMatches();
+
+            } catch (clickError) {
+                console.log(`⚠️ ไม่สามารถคลิกปุ่มได้: ${clickError.message}`);
+                return await this.extractCurrentPageMatches();
+            }
+
+        } catch (error) {
+            console.error('❌ เกิดข้อผิดพลาดในการคลิกปุ่มวันที่:', error);
+            return {
+                success: false,
+                error: error.message,
+                matches: [],
+                extractedAt: new Date().toISOString()
+            };
+        }
+    }
+
+    async extractCurrentPageMatches() {
+        // ดึงข้อมูลจากหน้าปัจจุบันโดยใช้ logic เดิม
+        const matchesData = await this.page.evaluate(() => {
+            // ใช้ logic เดียวกับใน extractMatchData
+            const matches = [];
+
+            const leagueSections = document.querySelectorAll('.bg-slate-700');
+            console.log(`พบ ${leagueSections.length} ส่วนลีก`);
+
+            if (leagueSections.length > 0) {
+                leagueSections.forEach((leagueSection, leagueIndex) => {
+                    const leagueTitle = leagueSection.querySelector('h3');
+                    let leagueName = '';
+                    if (leagueTitle) {
+                        leagueName = leagueTitle.textContent.replace(/\s*\(\d+\s*คู่\)\s*$/, '').trim();
+                    }
+
+                    let currentElement = leagueSection.nextElementSibling;
+                    let matchIndex = 0;
+
+                    while (currentElement && !currentElement.classList.contains('bg-slate-700')) {
+                        const matchElements = currentElement.querySelectorAll('.hidden.sm\\:flex, .block.sm\\:hidden');
+
+                        matchElements.forEach((element) => {
+                            // ใช้ logic ใน extractMatchFromElement แต่ซ้ำที่นี่
+                            try {
+                                // ดึงข้อมูลวันที่และเวลา
+                                let dateTime = '';
+                                let date = '';
+                                let time = '';
+
+                                // ค้นหาวันที่และเวลาจาก element และ siblings
+                                let searchElements = [element];
+                                let parentElement = element.parentElement;
+
+                                while (parentElement && searchElements.length < 10) {
+                                    searchElements.push(parentElement);
+                                    let prev = parentElement.previousElementSibling;
+                                    while (prev && searchElements.length < 10) {
+                                        searchElements.push(prev);
+                                        prev = prev.previousElementSibling;
+                                    }
+                                    parentElement = parentElement.parentElement;
+                                }
+
+                                // ค้นหาในทุก element ที่รวบรวมมา
+                                for (let searchElement of searchElements) {
+                                    const text = searchElement.textContent || '';
+                                    const dateMatch = text.match(/(\d{1,2}\/\d{1,2}\/\d{4})/);
+                                    const timeMatch = text.match(/(\d{1,2}:\d{2})/);
+
+                                    if (dateMatch || timeMatch) {
+                                        if (dateMatch) date = dateMatch[1];
+                                        if (timeMatch) time = timeMatch[1];
+                                        dateTime = text.trim();
+                                        break;
+                                    }
+                                }
+
+                                const homeTeamSection = element.querySelector('.w-2\\/5:not(.text-right)');
+                                const awayTeamSection = element.querySelector('.w-2\\/5.text-right');
+
+                                if (homeTeamSection && awayTeamSection) {
+                                    const homeTeamName = homeTeamSection.querySelector('.truncate');
+                                    const awayTeamName = awayTeamSection.querySelector('.truncate');
+                                    const homeTeamImg = homeTeamSection.querySelector('img');
+                                    const awayTeamImg = awayTeamSection.querySelector('img');
+
+                                    // ดึงข้อมูลลิงก์แมตช์
+                                    const matchLink = element.querySelector('.font-bold.text-yellow-300 a');
+                                    const matchUrl = matchLink ? matchLink.href : '';
+                                    const matchIdExtracted = matchUrl ? matchUrl.split('/').filter(Boolean).pop() : '';
+
+                                    if (homeTeamName && awayTeamName) {
+                                        matches.push({
+                                            id: `match_${leagueIndex}_${matchIndex}`,
+                                            matchId: matchIdExtracted,
+                                            dateTime: dateTime,
+                                            date: date,
+                                            time: time,
+                                            homeTeam: {
+                                                name: homeTeamName.textContent.trim(),
+                                                logo: homeTeamImg ? homeTeamImg.src : '',
+                                                alt: homeTeamImg ? homeTeamImg.alt : ''
+                                            },
+                                            awayTeam: {
+                                                name: awayTeamName.textContent.trim(),
+                                                logo: awayTeamImg ? awayTeamImg.src : '',
+                                                alt: awayTeamImg ? awayTeamImg.alt : ''
+                                            },
+                                            matchUrl: matchUrl,
+                                            league: leagueName,
+                                            elementType: element.className,
+                                            isDesktop: element.classList.contains('hidden'),
+                                            isMobile: element.classList.contains('block')
+                                        });
+                                        matchIndex++;
+                                    }
+                                }
+                            } catch (e) {
+                                console.error('Error processing match:', e);
+                            }
+                        });
+
+                        currentElement = currentElement.nextElementSibling;
+                    }
+                });
+            }
+
+            return matches;
+        });
+
+        return {
+            success: true,
+            totalMatches: matchesData.length,
+            matches: matchesData,
+            extractedAt: new Date().toISOString(),
+            method: 'click-navigation'
+        };
     }
 
     async close() {
