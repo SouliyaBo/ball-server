@@ -21,6 +21,11 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
+// Route สำหรับหน้าโปรแกรมบอล
+app.get('/program', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'program.html'));
+});
+
 // API Routes
 app.get('/api/matches/today', async (req, res) => {
     try {
