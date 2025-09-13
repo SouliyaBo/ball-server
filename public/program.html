@@ -17,7 +17,7 @@
             margin: 0;
             padding: 0;
             background: linear-gradient(to-l, #374151, #1f2937);
-            color: white;
+            color: rgb(6, 0, 0);
             line-height: 1.6;
             min-height: 100vh;
         }
@@ -123,7 +123,7 @@
             max-width: 1200px;
             margin: 0 auto;
             padding: 0;
-            background: transparent;
+            background: rg;
             min-height: 600px;
         }
 
@@ -142,7 +142,7 @@
         }
 
         .scraped-content * {
-            color: rgb(11, 1, 1) !important;
+            color: white !important;
         }
 
         .scraped-content a {
@@ -153,6 +153,83 @@
         .scraped-content a:hover {
             color: #93c5fd !important;
             text-decoration: underline;
+        }
+
+        /* จัดรูปแบบการแสดงแมตช์ให้เหมือนในรูป */
+        .scraped-content .hidden.sm\\:flex,
+        .scraped-content div[class*="sm:flex"] {
+            background: #374151 !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            border-radius: 8px !important;
+            padding: 16px !important;
+            margin: 8px 0 !important;
+            transition: background-color 0.2s ease !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+        }
+
+        .scraped-content .hidden.sm\\:flex:hover,
+        .scraped-content div[class*="sm:flex"]:hover {
+            background: #4b5563 !important;
+        }
+
+        /* จัดรูปแบบชื่อทีมและโลโก้ */
+        .scraped-content .font-medium {
+            color: white !important;
+            font-weight: 600 !important;
+            font-size: 14px !important;
+            display: flex !important;
+            align-items: center !important;
+            gap: 8px !important;
+        }
+
+        /* จัดรูปแบบโลโก้ทีม */
+        .scraped-content img[alt*="อาร์เซน่อล"],
+        .scraped-content img[alt*="ฟอเรสต์"],
+        .scraped-content img[width="24"][height="24"] {
+            width: 24px !important;
+            height: 24px !important;
+            object-fit: contain !important;
+            border-radius: 4px !important;
+            background: rgba(255, 255, 255, 0.1) !important;
+            padding: 2px !important;
+        }
+
+        /* จัดรูปแบบคำว่า "vs" */
+        .scraped-content .font-bold.text-yellow-300 {
+            color: #fbbf24 !important;
+            font-weight: 600 !important;
+            font-size: 14px !important;
+            text-align: center !important;
+        }
+
+        .scraped-content .font-bold.text-yellow-300 a {
+            color: #fbbf24 !important;
+            text-decoration: none !important;
+            transition: color 0.2s ease !important;
+        }
+
+        .scraped-content .font-bold.text-yellow-300 a:hover {
+            color: #f59e0b !important;
+        }
+
+        /* จัดรูปแบบทีมซ้าย (text-right) */
+        .scraped-content .w-2\\/5.text-right {
+            justify-content: flex-end !important;
+            text-align: right !important;
+        }
+
+        /* จัดรูปแบบทีมขวา (ไม่มี text-right) */
+        .scraped-content .w-2\\/5:not(.text-right) {
+            justify-content: flex-start !important;
+            text-align: left !important;
+        }
+
+        /* จัดรูปแบบส่วนกลาง */
+        .scraped-content .w-1\\/5.text-center {
+            justify-content: center !important;
+            text-align: center !important;
         }
 
         .scraped-content table {
@@ -257,12 +334,13 @@
         /* ปรับแต่งการ์ด */
         .scraped-content .card,
         .scraped-content .match-card {
-            background: rgba(0, 0, 0, 0.3) !important;
+            background: rgba(192, 24, 24, 0.3) !important;
             border: 1px solid rgba(255, 255, 255, 0.1) !important;
             border-radius: 12px !important;
             padding: 15px !important;
             margin: 10px 0 !important;
             backdrop-filter: blur(10px) !important;
+
         }
 
         /* Responsive Design */
@@ -409,16 +487,17 @@
                 return;
             }
 
-            // แสดงข้อมูลสถิติ
-            infoBar.innerHTML = `
-                📊 ข้อมูลจาก: ${data.baseUrl || 'เว็บต้นทาง'} |
-                📄 ขนาด: ${(data.html.length / 1024).toFixed(1)} KB |
-                🕐 อัปเดต: ${new Date(data.scrapedAt || Date.now()).toLocaleTimeString('th-TH')}
-            `;
-            infoBar.style.display = 'block';
+            // ซ่อน info bar เพื่อให้เหมือนเว็บต้นฉบับ
+            infoBar.style.display = 'none';
 
             // แสดง HTML ที่ scrape มา
             contentDiv.innerHTML = data.html;
+
+            // ลบ responsive duplicate content
+            removeResponsiveDuplicates(contentDiv);
+
+            // จัดรูปแบบการแสดงแมตช์
+            formatMatchDisplay(contentDiv);
 
             // เพิ่ม CSS ที่ scrape มา
             if (data.styles) {
@@ -443,6 +522,132 @@
             });
 
             console.log('✅ แสดงข้อมูลที่ scrape มาเรียบร้อย');
+        }
+
+        // ฟังก์ชันจัดรูปแบบการแสดงแมตช์
+        function formatMatchDisplay(container) {
+            // ค้นหา elements ที่แสดงแมตช์ฟุตบอล
+            const matchElements = container.querySelectorAll('.hidden.sm\\:flex, div[class*="sm:flex"]');
+
+            matchElements.forEach(element => {
+                // เพิ่มสไตล์พื้นฐาน
+                element.style.cssText = `
+                    background: #374151 !important;
+                    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+                    border-radius: 8px !important;
+                    padding: 16px !important;
+                    margin: 8px 0 !important;
+                    color: white !important;
+                    display: flex !important;
+                    align-items: center !important;
+                    justify-content: space-between !important;
+                    transition: background-color 0.2s ease !important;
+                `;
+
+                // เพิ่ม hover effect
+                element.addEventListener('mouseenter', function () {
+                    this.style.background = '#4b5563 !important';
+                });
+
+                element.addEventListener('mouseleave', function () {
+                    this.style.background = '#374151 !important';
+                });
+
+                // จัดรูปแบบชื่อทีม
+                const teamNames = element.querySelectorAll('.font-medium');
+                teamNames.forEach(name => {
+                    name.style.cssText = `
+                        color: white !important;
+                        font-weight: 600 !important;
+                        font-size: 14px !important;
+                        display: flex !important;
+                        align-items: center !important;
+                        gap: 8px !important;
+                    `;
+                });
+
+                // จัดรูปแบบโลโก้ทีม
+                const logos = element.querySelectorAll('img[width="24"][height="24"]');
+                logos.forEach(logo => {
+                    logo.style.cssText = `
+                        width: 24px !important;
+                        height: 24px !important;
+                        object-fit: contain !important;
+                        border-radius: 4px !important;
+                        background: rgba(255, 255, 255, 0.1) !important;
+                        padding: 2px !important;
+                    `;
+                });
+
+                // จัดรูปแบบคำว่า "vs"
+                const vsElement = element.querySelector('.font-bold.text-yellow-300');
+                if (vsElement) {
+                    vsElement.style.cssText = `
+                        color: #fbbf24 !important;
+                        font-weight: 600 !important;
+                        font-size: 14px !important;
+                        text-align: center !important;
+                    `;
+
+                    const vsLink = vsElement.querySelector('a');
+                    if (vsLink) {
+                        vsLink.style.cssText = `
+                            color: #fbbf24 !important;
+                            text-decoration: none !important;
+                            transition: color 0.2s ease !important;
+                        `;
+                    }
+                }
+            });
+
+            console.log('✅ จัดรูปแบบการแสดงแมตช์เสร็จสิ้น');
+        }
+
+        // ฟังก์ชันสำหรับลบ responsive duplicate content
+        function removeResponsiveDuplicates(container) {
+            // ลบ elements ที่ซ่อนในมือถือ (sm:hidden) เพราะเรามีเวอร์ชัน desktop อยู่แล้ว
+            const mobileHiddenElements = container.querySelectorAll('.sm\\:hidden');
+            mobileHiddenElements.forEach(element => {
+                console.log('ลบ mobile version:', element.textContent.substring(0, 50) + '...');
+                element.remove();
+            });
+
+            // ลบ duplicate ใน table rows
+            const tables = container.querySelectorAll('table');
+            tables.forEach(table => {
+                const rows = table.querySelectorAll('tbody tr, tr');
+                const seenContent = new Set();
+                const toRemove = [];
+
+                rows.forEach((row, index) => {
+                    // ข้าม header rows
+                    if (row.querySelector('th')) return;
+
+                    const cells = row.querySelectorAll('td');
+                    if (cells.length > 0) {
+                        // สร้าง signature จากเนื้อหาที่สำคัญ (ไม่รวม HTML tags และ attributes)
+                        const contentSignature = Array.from(cells).map(cell => {
+                            return cell.textContent.trim().replace(/\s+/g, ' ');
+                        }).filter(text => text.length > 0).join('|');
+
+                        if (contentSignature && seenContent.has(contentSignature)) {
+                            toRemove.push(row);
+                            console.log('พบแถวซ้ำ:', contentSignature.substring(0, 50) + '...');
+                        } else if (contentSignature) {
+                            seenContent.add(contentSignature);
+                        }
+                    }
+                });
+
+                // ลบแถวที่ซ้ำ
+                toRemove.forEach(row => row.remove());
+
+                if (toRemove.length > 0) {
+                    console.log(`ลบแถวซ้ำ ${toRemove.length} แถวจากตาราง`);
+                }
+            });
+
+            console.log('✅ ลบ responsive duplicates เสร็จสิ้น');
         }
 
         // ฟังก์ชันสำหรับโหลดข้อมูล
