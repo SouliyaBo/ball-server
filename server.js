@@ -28,52 +28,52 @@ app.get('/program', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'program.html'));
 });
 
-// ===== Program Scraper Routes =====
-// Route สำหรับ scrape โปรแกรมวันนี้
+// ===== Program Scraper Routes (HTML Direct) =====
+// Route สำหรับ scrape HTML โปรแกรมวันนี้
 app.get('/api/program/today', async (req, res) => {
     try {
-        console.log('🌐 กำลัง scrape โปรแกรมวันนี้จากเว็บเป้าหมาย...');
-        const programData = await programScraper.getTodayProgram();
-        console.log(`✅ Scrape สำเร็จ: พบ ${programData.totalMatches} แมตช์ใน ${programData.leagueGroups.length} ลีก`);
-        res.json(programData);
+        console.log('🌐 กำลัง scrape HTML โปรแกรมวันนี้จากเว็บเป้าหมาย...');
+        const htmlData = await programScraper.getTodayHTML();
+        console.log(`✅ Scrape HTML สำเร็จ: ได้ ${htmlData.html.length} characters`);
+        res.json(htmlData);
     } catch (error) {
-        console.error('❌ Error scraping today program:', error.message);
+        console.error('❌ Error scraping today HTML:', error.message);
         res.status(500).json({
-            error: 'ไม่สามารถ scrape โปรแกรมวันนี้ได้',
+            error: 'ไม่สามารถ scrape HTML โปรแกรมวันนี้ได้',
             message: error.message
         });
     }
 });
 
-// Route สำหรับ scrape โปรแกรมวันข้างหน้า
+// Route สำหรับ scrape HTML โปรแกรมวันข้างหน้า
 app.get('/api/program/upcoming', async (req, res) => {
     try {
         const days = parseInt(req.query.days) || 1;
-        console.log(`🌐 กำลัง scrape โปรแกรม ${days} วันข้างหน้าจากเว็บเป้าหมาย...`);
-        const programData = await programScraper.getUpcomingProgram(days);
-        console.log(`✅ Scrape สำเร็จ: พบ ${programData.totalMatches} แมตช์ใน ${programData.leagueGroups.length} ลีก`);
-        res.json(programData);
+        console.log(`🌐 กำลัง scrape HTML โปรแกรม ${days} วันข้างหน้าจากเว็บเป้าหมาย...`);
+        const htmlData = await programScraper.getUpcomingHTML(days);
+        console.log(`✅ Scrape HTML สำเร็จ: ได้ ${htmlData.html.length} characters`);
+        res.json(htmlData);
     } catch (error) {
-        console.error('❌ Error scraping upcoming program:', error.message);
+        console.error('❌ Error scraping upcoming HTML:', error.message);
         res.status(500).json({
-            error: 'ไม่สามารถ scrape โปรแกรมข้างหน้าได้',
+            error: 'ไม่สามารถ scrape HTML โปรแกรมข้างหน้าได้',
             message: error.message
         });
     }
 });
 
-// Route สำหรับ scrape โปรแกรมวันที่เฉพาะ
+// Route สำหรับ scrape HTML โปรแกรมวันที่เฉพาะ
 app.get('/api/program/date/:offset', async (req, res) => {
     try {
         const dateOffset = parseInt(req.params.offset) || 0;
-        console.log(`🌐 กำลัง scrape โปรแกรมวันที่ offset ${dateOffset} จากเว็บเป้าหมาย...`);
-        const programData = await programScraper.scrapeProgramData(dateOffset);
-        console.log(`✅ Scrape สำเร็จ: พบ ${programData.totalMatches} แมตช์ใน ${programData.leagueGroups.length} ลีก`);
-        res.json(programData);
+        console.log(`🌐 กำลัง scrape HTML โปรแกรมวันที่ offset ${dateOffset} จากเว็บเป้าหมาย...`);
+        const htmlData = await programScraper.getDateHTML(dateOffset);
+        console.log(`✅ Scrape HTML สำเร็จ: ได้ ${htmlData.html.length} characters`);
+        res.json(htmlData);
     } catch (error) {
-        console.error('❌ Error scraping program by date:', error.message);
+        console.error('❌ Error scraping HTML by date:', error.message);
         res.status(500).json({
-            error: 'ไม่สามารถ scrape โปรแกรมวันที่ได้',
+            error: 'ไม่สามารถ scrape HTML โปรแกรมวันที่ได้',
             message: error.message
         });
     }

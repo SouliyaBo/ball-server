@@ -6,126 +6,107 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>โปรแกรมบอลวันนี้ - Football Program Today</title>
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f8f9fa;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(to-l, #374151, #1f2937);
+            color: white;
             line-height: 1.6;
+            min-height: 100vh;
         }
 
         .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
             text-align: center;
-            margin-bottom: 30px;
+            padding: 20px;
+            margin-bottom: 0;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
         }
 
         .site-logo {
-            color: #0066cc;
             font-size: 24px;
             font-weight: bold;
             margin-bottom: 10px;
         }
 
         .main-title {
-            color: #2c3e50;
-            font-size: 28px;
-            font-weight: bold;
-            margin: 20px 0;
+            font-size: 32px;
+            font-weight: 700;
+            margin: 10px 0;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
         }
 
-        .date-selector {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin: 20px 0;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-
-        .date-btn {
-            background-color: #ffffff;
-            border: 2px solid #dee2e6;
-            color: #495057;
-            padding: 8px 16px;
-            border-radius: 6px;
-            cursor: pointer;
+        .subtitle {
             font-size: 14px;
-            transition: all 0.3s ease;
-            min-width: 100px;
-        }
-
-        .date-btn.active {
-            background-color: #0066cc;
-            color: white;
-            border-color: #0066cc;
-        }
-
-        .date-btn:hover {
-            background-color: #e9ecef;
-            border-color: #adb5bd;
-        }
-
-        .date-btn.active:hover {
-            background-color: #0056b3;
-        }
-
-        .container {
-            background-color: white;
-            padding: 25px;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            margin-bottom: 20px;
+            opacity: 0.9;
+            margin: 5px 0;
         }
 
         .controls {
             text-align: center;
-            margin-bottom: 25px;
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            flex-wrap: wrap;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(to-l, #4b5563, #374151);
+            border-bottom: 1px solid #6b7280;
         }
 
         .control-btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
             color: white;
             border: none;
             padding: 12px 24px;
-            border-radius: 8px;
+            border-radius: 25px;
             cursor: pointer;
             font-size: 14px;
             font-weight: 600;
+            margin: 5px 8px;
             transition: all 0.3s ease;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
         .control-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+            background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
         }
 
-        .control-btn.schedule-btn {
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        .control-btn.active {
+            background: linear-gradient(135deg, #f59e0b 0%, #f97316 100%);
+            box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4);
         }
 
         .loading {
             text-align: center;
-            padding: 40px;
-            color: #6c757d;
-            font-size: 16px;
+            padding: 60px 40px;
+            color: #d1d5db;
+            font-size: 18px;
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            margin: 20px;
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .loading::after {
             content: '';
             display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #0066cc;
+            width: 24px;
+            height: 24px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top: 3px solid #f59e0b;
             border-radius: 50%;
             animation: spin 1s linear infinite;
-            margin-left: 10px;
+            margin-left: 15px;
         }
 
         @keyframes spin {
@@ -138,303 +119,255 @@
             }
         }
 
-        .league-group {
-            margin-bottom: 25px;
-            border: 1px solid #e9ecef;
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        .content-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0;
+            background: transparent;
+            min-height: 600px;
         }
 
-        .league-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 18px 20px;
-            font-weight: 600;
-            font-size: 16px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+        .scraped-content {
+            padding: 0;
+            background: transparent;
         }
 
-        .league-matches-count {
-            background-color: rgba(255, 255, 255, 0.2);
-            padding: 4px 12px;
-            border-radius: 15px;
-            font-size: 14px;
+        /* ปรับแต่ง scraped content ให้เหมือนเว็บต้นฉบับ */
+        .scraped-content .space-y-4 {
+            background: linear-gradient(to-l, #374151, #1f2937) !important;
+            color: white !important;
+            padding: 1.5rem !important;
+            min-height: 16rem !important;
+            border-radius: 0 !important;
         }
 
-        .matches-list {
-            background-color: white;
+        .scraped-content * {
+            color: rgb(11, 1, 1) !important;
         }
 
-        .match-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 18px 20px;
-            border-bottom: 1px solid #f8f9fa;
-            transition: background-color 0.3s ease;
+        .scraped-content a {
+            color: #60a5fa !important;
+            text-decoration: none;
         }
 
-        .match-item:hover {
-            background-color: #f8f9fa;
+        .scraped-content a:hover {
+            color: #93c5fd !important;
+            text-decoration: underline;
         }
 
-        .match-item:last-child {
-            border-bottom: none;
-        }
-
-        .match-teams {
-            display: flex;
-            align-items: center;
-            flex-grow: 1;
-        }
-
-        .team {
-            display: flex;
-            align-items: center;
-            margin: 0 15px;
-            min-width: 180px;
-        }
-
-        .team-logo {
-            width: 32px;
-            height: 32px;
-            margin-right: 10px;
-            border-radius: 50%;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-        }
-
-        .team-name {
-            font-weight: 600;
-            color: #2c3e50;
-            font-size: 15px;
-        }
-
-        .vs {
-            color: #6c757d;
-            font-weight: bold;
-            margin: 0 20px;
-            font-size: 16px;
-        }
-
-        .match-info {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin-left: 20px;
-            min-width: 120px;
-        }
-
-        .match-time {
-            color: #e74c3c;
-            font-weight: bold;
-            font-size: 14px;
-        }
-
-        .match-status {
-            color: #28a745;
-            font-size: 12px;
-            margin-top: 4px;
-            padding: 2px 8px;
-            background-color: #d4edda;
-            border-radius: 12px;
-        }
-
-        .match-status.scheduled {
-            color: #fd7e14;
-            background-color: #fff3cd;
-        }
-
-        .match-status.finished {
-            color: #28a745;
-            background-color: #d4edda;
-        }
-
-        .score {
-            font-size: 20px;
-            font-weight: bold;
-            color: #e74c3c;
-            margin: 0 15px;
-        }
-
-        .summary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 20px;
+        .scraped-content table {
+            width: 100%;
+            border-collapse: collapse;
+            background: rgba(5, 4, 96, 0.2);
             border-radius: 8px;
-            margin-bottom: 25px;
-            text-align: center;
+            overflow: hidden;
+            margin: 20px 0;
         }
 
-        .summary h3 {
-            margin: 0 0 10px 0;
-            font-size: 18px;
+        .scraped-content th,
+        .scraped-content td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            color: white !important;
+        }
+
+        .scraped-content th {
+            background: rgba(0, 0, 0, 0.3);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 12px;
+            letter-spacing: 0.5px;
+        }
+
+        .scraped-content tr:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .scraped-content button {
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+            margin: 2px;
+            transition: all 0.3s ease;
+        }
+
+        .scraped-content button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .scraped-content .bg-gradient-to-l {
+            background: linear-gradient(to-left, #374151, #1f2937) !important;
+        }
+
+        .scraped-content .text-white {
+            color: white !important;
+        }
+
+        .scraped-content .bg-radial {
+            background: radial-gradient(circle at center, rgba(255, 255, 255, 0.1) 0%, transparent 70%) !important;
         }
 
         .error {
-            color: #dc3545;
+            color: #fca5a5;
             text-align: center;
-            padding: 20px;
-            background-color: #f8d7da;
+            padding: 40px 20px;
+            background: rgba(239, 68, 68, 0.1);
+            border-radius: 15px;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            margin: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .info-bar {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 15px 20px;
+            border-radius: 0;
+            margin: 0;
+            font-size: 12px;
+            color: #d1d5db;
+            text-align: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        /* ซ่อน elements ที่ไม่ต้องการ */
+        .scraped-content nav,
+        .scraped-content .navigation,
+        .scraped-content .header,
+        .scraped-content .footer,
+        .scraped-content .sidebar {
+            display: none !important;
+        }
+
+        /* ปรับแต่งรูปภาพ */
+        .scraped-content img {
+            max-width: 100%;
+            height: auto;
             border-radius: 8px;
-            border: 1px solid #f5c6cb;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
         }
 
-        .leagues-nav {
-            background-color: white;
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        /* ปรับแต่งการ์ด */
+        .scraped-content .card,
+        .scraped-content .match-card {
+            background: rgba(0, 0, 0, 0.3) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            border-radius: 12px !important;
+            padding: 15px !important;
+            margin: 10px 0 !important;
+            backdrop-filter: blur(10px) !important;
         }
 
-        .leagues-nav h3 {
-            color: #2c3e50;
-            margin-bottom: 15px;
-            font-size: 18px;
-        }
-
-        .league-links {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-
-        .league-link {
-            background-color: #f8f9fa;
-            color: #495057;
-            padding: 8px 16px;
-            border-radius: 20px;
-            text-decoration: none;
-            font-size: 14px;
-            transition: all 0.3s ease;
-            border: 1px solid #dee2e6;
-        }
-
-        .league-link:hover {
-            background-color: #0066cc;
-            color: white;
-            text-decoration: none;
-        }
-
+        /* Responsive Design */
         @media (max-width: 768px) {
-            body {
-                padding: 10px;
-            }
-
             .main-title {
-                font-size: 24px;
-            }
-
-            .match-item {
-                flex-direction: column;
-                text-align: center;
-                padding: 15px;
-            }
-
-            .match-teams {
-                margin-bottom: 10px;
-            }
-
-            .match-info {
-                margin-top: 10px;
-                margin-left: 0;
-            }
-
-            .team {
-                min-width: auto;
-                margin: 0 10px;
-            }
-
-            .date-selector {
-                justify-content: center;
+                font-size: 28px;
             }
 
             .controls {
-                flex-direction: column;
-                align-items: center;
+                padding: 15px 10px;
             }
+
+            .control-btn {
+                display: inline-block;
+                width: auto;
+                margin: 3px 5px;
+                padding: 10px 16px;
+                font-size: 12px;
+            }
+
+            .content-container {
+                margin: 0;
+                padding: 0;
+            }
+
+            .scraped-content .space-y-4 {
+                padding: 1rem !important;
+            }
+        }
+
+        /* แอนิเมชัน */
+        .content-container {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* เพิ่มเอฟเฟกต์พิเศษ */
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="20" cy="20" r="2" fill="rgba(255,255,255,0.1)"/><circle cx="80" cy="80" r="1" fill="rgba(255,255,255,0.1)"/><circle cx="40" cy="60" r="1.5" fill="rgba(255,255,255,0.1)"/></svg>');
+            opacity: 0.3;
+            pointer-events: none;
+        }
+
+        .header {
+            position: relative;
+            overflow: hidden;
         }
     </style>
 </head>
 
 <body>
     <div class="header">
-        <div class="site-logo">⚽ Football</div>
+        <div class="site-logo">⚽ Football Program</div>
         <h1 class="main-title">โปรแกรมบอลวันนี้</h1>
+        <div class="subtitle">ข้อมูลจาก football-dw3.pages.dev</div>
     </div>
 
-    <!-- Date Selector -->
-    <div class="date-selector">
-        <span style="margin-right: 15px; color: #495057; font-weight: 600;">โปรแกรมบอลวันที่</span>
-        <button class="date-btn" data-days="-4">จ 08 ก.ย. 2568</button>
-        <button class="date-btn" data-days="-3">อ 09 ก.ย. 2568</button>
-        <button class="date-btn" data-days="-2">พ 10 ก.ย. 2568</button>
-        <button class="date-btn" data-days="-1">พฤ 11 ก.ย. 2568</button>
-        <button class="date-btn active" data-days="0">ศ 12 ก.ย. 2568</button>
-        <button class="date-btn" data-days="1">ส 13 ก.ย. 2568</button>
-        <button class="date-btn" data-days="2">อา 14 ก.ย. 2568</button>
+    <div class="controls">
+        <button class="control-btn active" onclick="loadTodayProgram()" data-days="0">
+            📅 วันนี้
+        </button>
+        <button class="control-btn" onclick="loadUpcomingProgram(1)" data-days="1">
+            📆 พรุ่งนี้
+        </button>
+        <button class="control-btn" onclick="loadUpcomingProgram(2)" data-days="2">
+            📅 มะรืนนี้
+        </button>
+        <button class="control-btn" onclick="loadUpcomingProgram(3)" data-days="3">
+            🔮 3 วันข้างหน้า
+        </button>
     </div>
 
-    <!-- League Navigation -->
-    <div class="leagues-nav">
-        <h3>โปรแกรมบอลลีกต่างๆ</h3>
-        <div class="league-links">
-            <a href="#" class="league-link">🏴󠁧󠁢󠁥󠁮󠁧󠁿 PL โปรแกรมบอลพรีเมียร์ลีก อังกฤษ</a>
-            <a href="#" class="league-link">🇪🇸 LL โปรแกรมบอลลาลีกา สเปน</a>
-            <a href="#" class="league-link">🇮🇹 SA โปรแกรมบอลเซเรียอา อิตาลี</a>
-            <a href="#" class="league-link">🇩🇪 BL โปรแกรมบอลบุนเดสลีกา เยอรมัน</a>
-            <a href="#" class="league-link">🇫🇷 L1 โปรแกรมบอลลีกเอิง ฝรั่งเศส</a>
-            <a href="#" class="league-link">🇹🇭 TPL โปรแกรมบอลไทยพรีเมียร์ลีก</a>
-            <a href="#" class="league-link">🇪🇺 UCL โปรแกรมบอลยูฟ่า แชมเปียนส์ลีก</a>
-            <a href="#" class="league-link">🌍 UEL โปรแกรมบอลยูโรปาลีก</a>
-        </div>
+    <div id="loading" class="loading" style="display: none;">
+        กำลังโหลดข้อมูลจากเว็บต้นทาง...
     </div>
 
-    <div class="container">
-        <div class="controls">
-            <button class="control-btn" onclick="loadTodayMatches()">
-                📅 แสดงแมตช์วันนี้
-            </button>
-            <button class="control-btn schedule-btn" onclick="loadScheduledMatches()">
-                ⏰ แสดงแมตช์ที่ยังไม่เริ่ม
-            </button>
-            <button class="control-btn" onclick="loadUpcomingMatches()">
-                🔮 แสดงแมตช์ 3 วันข้างหน้า
-            </button>
-        </div>
-
-        <div id="loading" class="loading" style="display: none;">
-            กำลังโหลด...
-        </div>
-
-        <div id="summary" class="summary" style="display: none;"></div>
-        <div id="results"></div>
+    <div class="content-container">
+        <div id="info-bar" class="info-bar" style="display: none;"></div>
+        <div id="scraped-content" class="scraped-content"></div>
     </div>
 
     <script>
         let currentData = null;
 
-        // เพิ่ม Event Listeners สำหรับ Date Selector
-        document.querySelectorAll('.date-btn').forEach(btn => {
-            btn.addEventListener('click', function () {
-                // Remove active class from all buttons
-                document.querySelectorAll('.date-btn').forEach(b => b.classList.remove('active'));
-                // Add active class to clicked button
-                this.classList.add('active');
-
-                // Load scheduled matches for selected date
-                const days = parseInt(this.dataset.days);
-                loadScheduledMatchesForDate(days);
-            });
-        });
-
         function showLoading() {
             document.getElementById('loading').style.display = 'block';
-            document.getElementById('results').innerHTML = '';
-            document.getElementById('summary').style.display = 'none';
+            document.getElementById('scraped-content').innerHTML = '';
+            document.getElementById('info-bar').style.display = 'none';
         }
 
         function hideLoading() {
@@ -443,7 +376,7 @@
 
         function showError(message) {
             hideLoading();
-            document.getElementById('results').innerHTML = `
+            document.getElementById('scraped-content').innerHTML = `
                 <div class="error">
                     <h3>เกิดข้อผิดพลาด</h3>
                     <p>${message}</p>
@@ -451,308 +384,131 @@
             `;
         }
 
-        function displaySummary(data) {
-            const summaryDiv = document.getElementById('summary');
-            let totalMatches = 0;
-            let scheduledMatches = 0;
+        function updateActiveButton(days) {
+            // ลบ active class จากปุ่มทั้งหมด
+            document.querySelectorAll('.control-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
 
-            if (data.leagueGroups) {
-                data.leagueGroups.forEach(group => {
-                    totalMatches += group.matchCount || 0;
-                    if (group.matches) {
-                        scheduledMatches += group.matches.filter(match =>
-                            match.status === 'SCHEDULED'
-                        ).length;
-                    }
-                });
+            // เพิ่ม active class ให้ปุ่มที่ถูกต้อง
+            const targetBtn = document.querySelector(`[data-days="${days}"]`);
+            if (targetBtn) {
+                targetBtn.classList.add('active');
             }
-
-            summaryDiv.innerHTML = `
-                <h3>📊 สรุปข้อมูล</h3>
-                <p>📅 ช่วงวันที่: ${data.dateRange || 'ไม่ระบุ'}</p>
-                <p>⚽ แมตช์ทั้งหมด: ${totalMatches} แมตช์</p>
-                <p>⏰ แมตช์ที่ยังไม่เริ่ม: ${scheduledMatches} แมตช์</p>
-                <p>🏆 จำนวนลีก: ${data.leagueGroups?.length || 0} ลีก</p>
-            `;
-            summaryDiv.style.display = 'block';
         }
 
-        function displayMatches(data) {
+        function displayScrapedContent(data) {
             hideLoading();
             currentData = data;
 
-            displaySummary(data);
+            const infoBar = document.getElementById('info-bar');
+            const contentDiv = document.getElementById('scraped-content');
 
-            const resultsDiv = document.getElementById('results');
-
-            if (!data.leagueGroups || data.leagueGroups.length === 0) {
-                resultsDiv.innerHTML = `
-                    <div class="error">
-                        <h3>ไม่พบข้อมูลแมตช์</h3>
-                        <p>ขณะนี้ไม่มีแมตช์ที่ยังไม่เริ่มในช่วงเวลาที่เลือก</p>
-                    </div>
-                `;
+            if (!data || !data.html) {
+                showError('ไม่พบข้อมูลจากเว็บต้นทาง');
                 return;
             }
 
-            // กรองเฉพาะลีกที่ต้องการแสดง - ใช้การจับคู่ที่แม่นยำ
-            const targetLeagueMapping = {
-                // จาก API ที่ได้จริง
-                '737': '🏴󠁧󠁢󠁥󠁮󠁧󠁿 PL โปรแกรมบอลพรีเมียร์ลีก อังกฤษ',   // Premier League
-                '564': '🇪🇸 LL โปรแกรมบอลลาลีกา สเปน',               // La Liga
-                '567': '🇪🇸 LL โปรแกรมบอลลาลีกา สเปน',               // La Liga 2 (backup)
-                '648': '🇮🇹 SA โปรแกรมบอลเซเรียอา อิตาลี',            // Serie A
-                '182': '🇩🇪 BL โปรแกรมบอลบุนเดสลีกา เยอรมัน',         // Bundesliga (Austria)
-                '181': '🇩🇪 BL โปรแกรมบอลบุนเดสลีกา เยอรมัน',         // Admiral Bundesliga
-                '956': '🇫🇷 L1 โปรแกรมบอลลีกเอิง ฝรั่งเศส',           // Ligue 1
-                '1064': '🇹🇭 TPL โปรแกรมบอลไทยพรีเมียร์ลีก',          // Thai Premier League
-                '1': '🇪🇺 UCL โปรแกรมบอลยูฟ่า แชมเปียนส์ลีก',          // Champions League
-                '1107': '🇪🇺 UCL โปรแกรมบอลยูฟ่า แชมเปียนส์ลีก',      // CAF Champions League (backup)
-                '5': '🌍 UEL โปรแกรมบอลยูโรปาลีก'                    // Europa League
-            };
+            // แสดงข้อมูลสถิติ
+            infoBar.innerHTML = `
+                📊 ข้อมูลจาก: ${data.baseUrl || 'เว็บต้นทาง'} |
+                📄 ขนาด: ${(data.html.length / 1024).toFixed(1)} KB |
+                🕐 อัปเดต: ${new Date(data.scrapedAt || Date.now()).toLocaleTimeString('th-TH')}
+            `;
+            infoBar.style.display = 'block';
 
-            // ฟังก์ชันตรวจสอบว่าลีกเป็นลีกเป้าหมายหรือไม่
-            function isTargetLeague(leagueId, leagueName) {
-                // ลองจับคู่ด้วย ID ก่อน (แม่นยำที่สุด)
-                if (targetLeagueMapping[leagueId]) {
-                    return true;
+            // แสดง HTML ที่ scrape มา
+            contentDiv.innerHTML = data.html;
+
+            // เพิ่ม CSS ที่ scrape มา
+            if (data.styles) {
+                // ลบ style tag เก่าออกก่อน
+                const oldStyle = document.getElementById('scraped-styles');
+                if (oldStyle) {
+                    oldStyle.remove();
                 }
 
-                // ถ้าไม่มี ID ให้ลองจับคู่ด้วยชื่อ (เพื่อป้องกันกรณี ID เปลี่ยน)
-                const name = (leagueName || '').toLowerCase();
-
-                // Premier League - ลดความเข้มงวด
-                if (name.includes('premier') && name.includes('league')) {
-                    return true;
-                }
-
-                // La Liga - ลดความเข้มงวด
-                if (name.includes('la liga') || name.includes('laliga') ||
-                    (name.includes('liga') && (name.includes('spain') || name.includes('spanish')))) {
-                    return true;
-                }
-
-                // Serie A - ลดความเข้มงวด
-                if (name.includes('serie a') ||
-                    (name.includes('serie') && (name.includes('italy') || name.includes('italian')))) {
-                    return true;
-                }
-
-                // Bundesliga - ลดความเข้มงวด
-                if (name.includes('bundesliga')) {
-                    return true;
-                }
-
-                // Ligue 1 - ลดความเข้มงวด
-                if (name.includes('ligue 1') || name.includes('ligue1') ||
-                    (name.includes('ligue') && (name.includes('france') || name.includes('french')))) {
-                    return true;
-                }
-
-                // Thai Premier League - ลดความเข้มงวด
-                if (name.includes('thai') && (name.includes('premier') || name.includes('league'))) {
-                    return true;
-                }
-
-                // Champions League - ลดความเข้มงวด
-                if (name.includes('champions') && name.includes('league')) {
-                    return true;
-                }
-
-                // Europa League - ลดความเข้มงวด
-                if (name.includes('europa') && name.includes('league')) {
-                    return true;
-                }
-
-                return false;
+                // เพิ่ม style ใหม่
+                const styleElement = document.createElement('style');
+                styleElement.id = 'scraped-styles';
+                styleElement.textContent = data.styles;
+                document.head.appendChild(styleElement);
             }
 
-            let html = '';
-            let targetLeagueCount = 0;
-
-            // Debug: แสดงข้อมูลลีกทั้งหมดที่มีแมตช์
-            console.log("=== Debug: All Leagues with Matches ===");
-            let debugInfo = "=== ลีกทั้งหมดที่มีแมตช์ ===<br>";
-            data.leagueGroups.forEach(league => {
-                if (league.matches && league.matches.length > 0) {
-                    const info = `League ID: ${league.leagueId}, Name: ${league.leagueName || 'N/A'}, NameEn: ${league.leagueNameEn || 'N/A'}, Matches: ${league.matches.length}`;
-                    console.log(info);
-                    debugInfo += info + "<br>";
-                }
-            });
-            console.log("=====================================");
-            debugInfo += "=====================================<br><br>";
-
-            // แสดง debug info ในหน้าเว็บ
-            const debugDiv = document.createElement('div');
-            debugDiv.innerHTML = `<div style="background: #f0f0f0; padding: 10px; margin: 10px 0; font-size: 12px; max-height: 200px; overflow-y: auto; border: 1px solid #ccc;">${debugInfo}</div>`;
-            resultsDiv.appendChild(debugDiv);
-
-            data.leagueGroups.forEach(league => {
-                if (!league.matches || league.matches.length === 0) return;
-
-                // ตรวจสอบว่าเป็นลีกที่ต้องการแสดงหรือไม่
-                const leagueId = league.leagueId?.toString();
-                const leagueName = league.leagueName || league.leagueNameEn || '';
-
-                // Debug: แสดงการตรวจสอบแต่ละลีก
-                const isTarget = isTargetLeague(leagueId, leagueName);
-                console.log(`Checking League ID: ${leagueId}, Name: "${leagueName}", IsTarget: ${isTarget}`);
-
-                if (!isTarget) return;
-
-                targetLeagueCount++;                // แสดงแมตช์ทั้งหมดเพื่อทดสอบ (ไม่กรองเฉพาะ SCHEDULED ก่อน)
-                const displayMatches = league.matches;
-
-                // ถ้าไม่มีแมตช์ในลีกนี้ ให้ข้ามไป
-                if (displayMatches.length === 0) return;
-
-                // ใช้ชื่อลีกจาก mapping หรือชื่อเดิม
-                const displayLeagueName = targetLeagueMapping[leagueId] ||
-                    league.leagueName ||
-                    league.leagueNameEn ||
-                    `ลีก ID ${league.leagueId}`;
-
-                html += `
-                    <div class="league-group">
-                        <div class="league-header">
-                            <span>${displayLeagueName}</span>
-                            <span class="league-matches-count">${displayMatches.length} แมตช์</span>
-                        </div>
-                        <div class="matches-list">
-                `;
-                console.log("Target League Found:: ", displayLeagueName, " (ID:", leagueId, ")")
-
-                displayMatches.forEach(match => {
-                    // แสดงเวลาในรูปแบบ DD/MM HH:MM ตามเว็บเป้าหมาย และลบเวลา 7 ชั่วโมง
-                    const date = new Date(match.startTime);
-                    // ลบเวลา 7 ชั่วโมง (7 * 60 * 60 * 1000 มิลลิวินาที)
-                    const adjustedDate = new Date(date.getTime() - (7 * 60 * 60 * 1000));
-                    const day = adjustedDate.toLocaleString('en-GB', { day: '2-digit' });
-                    const month = adjustedDate.toLocaleString('en-GB', { month: '2-digit' });
-                    const time = adjustedDate.toLocaleString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
-                    const matchTime = `${day}/${month} ${time}`;
-
-                    const statusClass = match.status === 'SCHEDULED' ? 'scheduled' : 'finished';
-                    const statusText = getStatusText(match.status);
-
-                    html += `
-                        <div class="match-item">
-                            <div class="match-teams">
-                                <div class="team">
-                                    <img src="${match.homeTeamImage}" alt="${match.homeTeam}" class="team-logo"
-                                         onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2232%22 height=%2232%22 viewBox=%220 0 32 32%22><circle cx=%2216%22 cy=%2216%22 r=%2216%22 fill=%22%23ddd%22/><text x=%2216%22 y=%2220%22 text-anchor=%22middle%22 fill=%22%23666%22 font-size=%2212%22>⚽</text></svg>'">
-                                    <span class="team-name">${match.homeTeam}</span>
-                                </div>
-
-                                <div class="vs">VS</div>
-
-                                <div class="team">
-                                    <img src="${match.awayTeamImage}" alt="${match.awayTeam}" class="team-logo"
-                                         onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2232%22 height=%2232%22 viewBox=%220 0 32 32%22><circle cx=%2216%22 cy=%2216%22 r=%2216%22 fill=%22%23ddd%22/><text x=%2216%22 y=%2220%22 text-anchor=%22middle%22 fill=%22%23666%22 font-size=%2212%22>⚽</text></svg>'">
-                                    <span class="team-name">${match.awayTeam}</span>
-                                </div>
-                            </div>
-
-                            <div class="match-info">
-                                <div class="match-time">🕐 ${matchTime}</div>
-                                <div class="match-status ${statusClass}">${statusText}</div>
-                            </div>
-                        </div>
-                    `;
-                });
-
-                html += `
-                        </div>
-                    </div>
-                `;
+            // ปรับแต่งลิงก์ให้เปิดในแท็บใหม่
+            const links = contentDiv.querySelectorAll('a[href]');
+            links.forEach(link => {
+                link.target = '_blank';
+                link.rel = 'noopener noreferrer';
             });
 
-            resultsDiv.innerHTML = html;
-
-            // แสดงข้อความถ้าไม่พบลีกเป้าหมาย
-            if (targetLeagueCount === 0) {
-                resultsDiv.innerHTML = `
-                    <div class="error">
-                        <h3>ไม่พบลีกเป้าหมาย</h3>
-                        <p>ขณะนี้ไม่มีแมตช์ในลีกเป้าหมายในช่วงเวลาที่เลือก</p>
-                        <small>ลีกเป้าหมาย: Premier League, La Liga, Serie A, Bundesliga, Ligue 1, Thai Premier League, UEFA Champions League, UEFA Europa League</small>
-                    </div>
-                `;
-            } else {
-                console.log(`Found ${targetLeagueCount} target leagues with matches`);
-            }
+            console.log('✅ แสดงข้อมูลที่ scrape มาเรียบร้อย');
         }
 
-        function getStatusText(status) {
-            const statusMap = {
-                'SCHEDULED': '⏰ ยังไม่เริ่ม',
-                'LIVE': '🔴 กำลังแข่ง',
-                'HT': '⏸️ พักครึ่ง',
-                'FT': '✅ จบแล้ว',
-                'POSTPONED': '⏳ เลื่อน',
-                'CANCELLED': '❌ ยกเลิก'
-            };
-            return statusMap[status] || status;
-        }
-
-        async function loadScheduledMatchesForDate(days) {
+        // ฟังก์ชันสำหรับโหลดข้อมูล
+        async function loadTodayProgram() {
             showLoading();
+            updateActiveButton(0);
             try {
-                let response;
-                if (days === 0) {
-                    // วันนี้
-                    response = await fetch('/api/matches/today/scheduled/by-league');
-                } else if (days > 0) {
-                    // วันข้างหน้า
-                    response = await fetch(`/api/matches/upcoming/scheduled/by-league?days=${days}`);
-                } else {
-                    // วันที่ผ่านมา - ใช้วันนี้แทน (เพราะ API ไม่รองรับวันที่ผ่านมา)
-                    response = await fetch('/api/matches/today/scheduled/by-league');
-                }
+                const response = await fetch('/api/program/today');
                 const data = await response.json();
-                displayMatches(data);
+                displayScrapedContent(data);
             } catch (error) {
-                showError('ไม่สามารถโหลดข้อมูลแมตช์ที่ยังไม่เริ่มได้: ' + error.message);
+                showError('ไม่สามารถโหลดข้อมูลโปรแกรมวันนี้ได้: ' + error.message);
             }
         }
 
-        async function loadTodayMatches() {
+        async function loadUpcomingProgram(days) {
             showLoading();
+            updateActiveButton(days);
             try {
-                const response = await fetch('/api/matches/today/by-league');
+                const response = await fetch(`/api/program/upcoming?days=${days}`);
                 const data = await response.json();
-                displayMatches(data);
+                displayScrapedContent(data);
             } catch (error) {
-                showError('ไม่สามารถโหลดข้อมูลแมตช์วันนี้ได้: ' + error.message);
+                showError(`ไม่สามารถโหลดข้อมูลโปรแกรม ${days} วันข้างหน้าได้: ` + error.message);
             }
         }
 
-        async function loadScheduledMatches() {
+        async function loadProgramByDate(dateOffset) {
             showLoading();
+            updateActiveButton(dateOffset);
             try {
-                const response = await fetch('/api/matches/today/scheduled/by-league');
+                const response = await fetch(`/api/program/date/${dateOffset}`);
                 const data = await response.json();
-                displayMatches(data);
+                displayScrapedContent(data);
             } catch (error) {
-                showError('ไม่สามารถโหลดข้อมูลแมตช์ที่ยังไม่เริ่มได้: ' + error.message);
+                showError(`ไม่สามารถโหลดข้อมูลโปรแกรมวันที่ได้: ` + error.message);
             }
         }
 
-        async function loadUpcomingMatches(days = 3) {
-            showLoading();
-            try {
-                const response = await fetch(`/api/matches/upcoming/scheduled/by-league?days=${days}`);
-                const data = await response.json();
-                displayMatches(data);
-            } catch (error) {
-                showError('ไม่สามารถโหลดข้อมูลแมตช์ข้างหน้าได้: ' + error.message);
-            }
-        }
-
-        // Auto-load today's matches on page load
+        // โหลดข้อมูลวันนี้เมื่อเปิดหน้าเว็บ
         document.addEventListener('DOMContentLoaded', function () {
-            loadScheduledMatches(); // แสดงแมตช์ที่ยังไม่เริ่มเป็นค่าเริ่มต้น
+            loadTodayProgram();
+        });
+
+        // เพิ่ม keyboard shortcuts
+        document.addEventListener('keydown', function (e) {
+            if (e.ctrlKey || e.metaKey) {
+                switch (e.key) {
+                    case '0':
+                        e.preventDefault();
+                        loadTodayProgram();
+                        break;
+                    case '1':
+                        e.preventDefault();
+                        loadUpcomingProgram(1);
+                        break;
+                    case '2':
+                        e.preventDefault();
+                        loadUpcomingProgram(2);
+                        break;
+                    case '3':
+                        e.preventDefault();
+                        loadUpcomingProgram(3);
+                        break;
+                }
+            }
         });
     </script>
 </body>

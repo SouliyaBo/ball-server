@@ -129,8 +129,13 @@
         }
 
         @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
         }
 
         .league-group {
@@ -242,6 +247,18 @@
             background-color: #fff3cd;
         }
 
+        .match-status.finished {
+            color: #28a745;
+            background-color: #d4edda;
+        }
+
+        .score {
+            font-size: 20px;
+            font-weight: bold;
+            color: #e74c3c;
+            margin: 0 15px;
+        }
+
         .summary {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
@@ -303,23 +320,38 @@
         }
 
         @media (max-width: 768px) {
-            body { padding: 10px; }
-            .main-title { font-size: 24px; }
+            body {
+                padding: 10px;
+            }
+
+            .main-title {
+                font-size: 24px;
+            }
+
             .match-item {
                 flex-direction: column;
                 text-align: center;
                 padding: 15px;
             }
-            .match-teams { margin-bottom: 10px; }
+
+            .match-teams {
+                margin-bottom: 10px;
+            }
+
             .match-info {
                 margin-top: 10px;
                 margin-left: 0;
             }
+
             .team {
                 min-width: auto;
                 margin: 0 10px;
             }
-            .date-selector { justify-content: center; }
+
+            .date-selector {
+                justify-content: center;
+            }
+
             .controls {
                 flex-direction: column;
                 align-items: center;
@@ -364,13 +396,13 @@
     <div class="container">
         <div class="controls">
             <button class="control-btn" onclick="loadTodayMatches()">
-                📅 แสดงโปรแกรมวันนี้
+                📅 แสดงแมตช์วันนี้
             </button>
             <button class="control-btn schedule-btn" onclick="loadScheduledMatches()">
-                ⏰ แสดงโปรแกรมแมตช์
+                ⏰ แสดงแมตช์ที่ยังไม่เริ่ม
             </button>
             <button class="control-btn" onclick="loadUpcomingMatches()">
-                🔮 แสดงโปรแกรม 3 วันข้างหน้า
+                🔮 แสดงแมตช์ 3 วันข้างหน้า
             </button>
         </div>
 
@@ -388,9 +420,12 @@
         // เพิ่ม Event Listeners สำหรับ Date Selector
         document.querySelectorAll('.date-btn').forEach(btn => {
             btn.addEventListener('click', function () {
+                // Remove active class from all buttons
                 document.querySelectorAll('.date-btn').forEach(b => b.classList.remove('active'));
+                // Add active class to clicked button
                 this.classList.add('active');
 
+                // Load scheduled matches for selected date
                 const days = parseInt(this.dataset.days);
                 loadScheduledMatchesForDate(days);
             });
@@ -419,38 +454,27 @@
         function displaySummary(data) {
             const summaryDiv = document.getElementById('summary');
             let totalMatches = 0;
+            let scheduledMatches = 0;
 
             if (data.leagueGroups) {
                 data.leagueGroups.forEach(group => {
                     totalMatches += group.matchCount || 0;
+                    if (group.matches) {
+                        scheduledMatches += group.matches.filter(match =>
+                            match.status === 'SCHEDULED'
+                        ).length;
+                    }
                 });
             }
 
             summaryDiv.innerHTML = `
                 <h3>📊 สรุปข้อมูล</h3>
-                <p>📅 ข้อมูลจาก: เว็บเป้าหมาย football-dw3.pages.dev</p>
+                <p>📅 ช่วงวันที่: ${data.dateRange || 'ไม่ระบุ'}</p>
                 <p>⚽ แมตช์ทั้งหมด: ${totalMatches} แมตช์</p>
+                <p>⏰ แมตช์ที่ยังไม่เริ่ม: ${scheduledMatches} แมตช์</p>
                 <p>🏆 จำนวนลีก: ${data.leagueGroups?.length || 0} ลีก</p>
-                <p>🕐 อัปเดตล่าสุด: ${new Date().toLocaleTimeString('th-TH')}</p>
             `;
             summaryDiv.style.display = 'block';
-        }
-
-        // ฟังก์ชันกรองลีกเป้าหมาย
-        function isTargetLeague(leagueName) {
-            const name = (leagueName || '').toLowerCase();
-            const targetKeywords = [
-                'premier league', 'premier', 'epl',
-                'la liga', 'laliga', 'liga',
-                'serie a', 'seria a',
-                'bundesliga',
-                'ligue 1', 'ligue',
-                'thai premier', 'thailand', 'tpl',
-                'champions league', 'ucl', 'uefa champions',
-                'europa league', 'uel', 'uefa europa'
-            ];
-
-            return targetKeywords.some(keyword => name.includes(keyword));
         }
 
         function displayMatches(data) {
@@ -464,77 +488,175 @@
             if (!data.leagueGroups || data.leagueGroups.length === 0) {
                 resultsDiv.innerHTML = `
                     <div class="error">
-                        <h3>ไม่พบข้อมูลโปรแกรม</h3>
-                        <p>ขณะนี้ไม่มีข้อมูลโปรแกรมบอลในเว็บเป้าหมาย</p>
+                        <h3>ไม่พบข้อมูลแมตช์</h3>
+                        <p>ขณะนี้ไม่มีแมตช์ที่ยังไม่เริ่มในช่วงเวลาที่เลือก</p>
                     </div>
                 `;
                 return;
             }
 
+            // กรองเฉพาะลีกที่ต้องการแสดง - ใช้การจับคู่ที่แม่นยำ
+            const targetLeagueMapping = {
+                // จาก API ที่ได้จริง
+                '737': '🏴󠁧󠁢󠁥󠁮󠁧󠁿 PL โปรแกรมบอลพรีเมียร์ลีก อังกฤษ',   // Premier League
+                '564': '🇪🇸 LL โปรแกรมบอลลาลีกา สเปน',               // La Liga
+                '567': '🇪🇸 LL โปรแกรมบอลลาลีกา สเปน',               // La Liga 2 (backup)
+                '648': '🇮🇹 SA โปรแกรมบอลเซเรียอา อิตาลี',            // Serie A
+                '182': '🇩🇪 BL โปรแกรมบอลบุนเดสลีกา เยอรมัน',         // Bundesliga (Austria)
+                '181': '🇩🇪 BL โปรแกรมบอลบุนเดสลีกา เยอรมัน',         // Admiral Bundesliga
+                '956': '🇫🇷 L1 โปรแกรมบอลลีกเอิง ฝรั่งเศส',           // Ligue 1
+                '1064': '🇹🇭 TPL โปรแกรมบอลไทยพรีเมียร์ลีก',          // Thai Premier League
+                '1': '🇪🇺 UCL โปรแกรมบอลยูฟ่า แชมเปียนส์ลีก',          // Champions League
+                '1107': '🇪🇺 UCL โปรแกรมบอลยูฟ่า แชมเปียนส์ลีก',      // CAF Champions League (backup)
+                '5': '🌍 UEL โปรแกรมบอลยูโรปาลีก'                    // Europa League
+            };
+
+            // ฟังก์ชันตรวจสอบว่าลีกเป็นลีกเป้าหมายหรือไม่
+            function isTargetLeague(leagueId, leagueName) {
+                // ลองจับคู่ด้วย ID ก่อน (แม่นยำที่สุด)
+                if (targetLeagueMapping[leagueId]) {
+                    return true;
+                }
+
+                // ถ้าไม่มี ID ให้ลองจับคู่ด้วยชื่อ (เพื่อป้องกันกรณี ID เปลี่ยน)
+                const name = (leagueName || '').toLowerCase();
+
+                // Premier League - ลดความเข้มงวด
+                if (name.includes('premier') && name.includes('league')) {
+                    return true;
+                }
+
+                // La Liga - ลดความเข้มงวด
+                if (name.includes('la liga') || name.includes('laliga') ||
+                    (name.includes('liga') && (name.includes('spain') || name.includes('spanish')))) {
+                    return true;
+                }
+
+                // Serie A - ลดความเข้มงวด
+                if (name.includes('serie a') ||
+                    (name.includes('serie') && (name.includes('italy') || name.includes('italian')))) {
+                    return true;
+                }
+
+                // Bundesliga - ลดความเข้มงวด
+                if (name.includes('bundesliga')) {
+                    return true;
+                }
+
+                // Ligue 1 - ลดความเข้มงวด
+                if (name.includes('ligue 1') || name.includes('ligue1') ||
+                    (name.includes('ligue') && (name.includes('france') || name.includes('french')))) {
+                    return true;
+                }
+
+                // Thai Premier League - ลดความเข้มงวด
+                if (name.includes('thai') && (name.includes('premier') || name.includes('league'))) {
+                    return true;
+                }
+
+                // Champions League - ลดความเข้มงวด
+                if (name.includes('champions') && name.includes('league')) {
+                    return true;
+                }
+
+                // Europa League - ลดความเข้มงวด
+                if (name.includes('europa') && name.includes('league')) {
+                    return true;
+                }
+
+                return false;
+            }
+
             let html = '';
             let targetLeagueCount = 0;
+
+            // Debug: แสดงข้อมูลลีกทั้งหมดที่มีแมตช์
+            console.log("=== Debug: All Leagues with Matches ===");
+            let debugInfo = "=== ลีกทั้งหมดที่มีแมตช์ ===<br>";
+            data.leagueGroups.forEach(league => {
+                if (league.matches && league.matches.length > 0) {
+                    const info = `League ID: ${league.leagueId}, Name: ${league.leagueName || 'N/A'}, NameEn: ${league.leagueNameEn || 'N/A'}, Matches: ${league.matches.length}`;
+                    console.log(info);
+                    debugInfo += info + "<br>";
+                }
+            });
+            console.log("=====================================");
+            debugInfo += "=====================================<br><br>";
+
+            // แสดง debug info ในหน้าเว็บ
+            const debugDiv = document.createElement('div');
+            debugDiv.innerHTML = `<div style="background: #f0f0f0; padding: 10px; margin: 10px 0; font-size: 12px; max-height: 200px; overflow-y: auto; border: 1px solid #ccc;">${debugInfo}</div>`;
+            resultsDiv.appendChild(debugDiv);
 
             data.leagueGroups.forEach(league => {
                 if (!league.matches || league.matches.length === 0) return;
 
+                // ตรวจสอบว่าเป็นลีกที่ต้องการแสดงหรือไม่
+                const leagueId = league.leagueId?.toString();
                 const leagueName = league.leagueName || league.leagueNameEn || '';
-                
-                // กรองเฉพาะลีกเป้าหมาย
-                if (!isTargetLeague(leagueName)) return;
-                
-                targetLeagueCount++;
 
+                // Debug: แสดงการตรวจสอบแต่ละลีก
+                const isTarget = isTargetLeague(leagueId, leagueName);
+                console.log(`Checking League ID: ${leagueId}, Name: "${leagueName}", IsTarget: ${isTarget}`);
+
+                if (!isTarget) return;
+
+                targetLeagueCount++;                // แสดงแมตช์ทั้งหมดเพื่อทดสอบ (ไม่กรองเฉพาะ SCHEDULED ก่อน)
                 const displayMatches = league.matches;
+
+                // ถ้าไม่มีแมตช์ในลีกนี้ ให้ข้ามไป
                 if (displayMatches.length === 0) return;
+
+                // ใช้ชื่อลีกจาก mapping หรือชื่อเดิม
+                const displayLeagueName = targetLeagueMapping[leagueId] ||
+                    league.leagueName ||
+                    league.leagueNameEn ||
+                    `ลีก ID ${league.leagueId}`;
 
                 html += `
                     <div class="league-group">
                         <div class="league-header">
-                            <span>🏆 ${leagueName}</span>
+                            <span>${displayLeagueName}</span>
                             <span class="league-matches-count">${displayMatches.length} แมตช์</span>
                         </div>
                         <div class="matches-list">
                 `;
+                console.log("Target League Found:: ", displayLeagueName, " (ID:", leagueId, ")")
 
                 displayMatches.forEach(match => {
-                    // ปรับเวลาลบ 7 ชั่วโมง
-                    let matchTime = match.matchTime || match.startTime || '';
-                    if (matchTime && matchTime.includes(':')) {
-                        try {
-                            const timeParts = matchTime.split(':');
-                            if (timeParts.length >= 2) {
-                                let hours = parseInt(timeParts[0]) - 7;
-                                if (hours < 0) hours += 24;
-                                matchTime = `${hours.toString().padStart(2, '0')}:${timeParts[1]}`;
-                            }
-                        } catch (e) {
-                            // ถ้าแปลงเวลาไม่ได้ ใช้เวลาเดิม
-                        }
-                    }
+                    // แสดงเวลาในรูปแบบ DD/MM HH:MM ตามเว็บเป้าหมาย และลบเวลา 7 ชั่วโมง
+                    const date = new Date(match.startTime);
+                    // ลบเวลา 7 ชั่วโมง (7 * 60 * 60 * 1000 มิลลิวินาที)
+                    const adjustedDate = new Date(date.getTime() - (7 * 60 * 60 * 1000));
+                    const day = adjustedDate.toLocaleString('en-GB', { day: '2-digit' });
+                    const month = adjustedDate.toLocaleString('en-GB', { month: '2-digit' });
+                    const time = adjustedDate.toLocaleString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
+                    const matchTime = `${day}/${month} ${time}`;
 
-                    const statusText = match.status === 'SCHEDULED' ? '⏰ ยังไม่เริ่ม' : 
-                                     match.status === 'LIVE' ? '🔴 กำลังแข่ง' : 
-                                     match.status === 'FT' ? '✅ จบแล้ว' : match.status;
+                    const statusClass = match.status === 'SCHEDULED' ? 'scheduled' : 'finished';
+                    const statusText = getStatusText(match.status);
 
                     html += `
                         <div class="match-item">
                             <div class="match-teams">
                                 <div class="team">
-                                    <img src="${match.homeTeamImage || 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2232%22 height=%2232%22 viewBox=%220 0 32 32%22><circle cx=%2216%22 cy=%2216%22 r=%2216%22 fill=%22%23ddd%22/><text x=%2216%22 y=%2220%22 text-anchor=%22middle%22 fill=%22%23666%22 font-size=%2212%22>⚽</text></svg>'}" alt="${match.homeTeam}" class="team-logo">
+                                    <img src="${match.homeTeamImage}" alt="${match.homeTeam}" class="team-logo"
+                                         onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2232%22 height=%2232%22 viewBox=%220 0 32 32%22><circle cx=%2216%22 cy=%2216%22 r=%2216%22 fill=%22%23ddd%22/><text x=%2216%22 y=%2220%22 text-anchor=%22middle%22 fill=%22%23666%22 font-size=%2212%22>⚽</text></svg>'">
                                     <span class="team-name">${match.homeTeam}</span>
                                 </div>
 
                                 <div class="vs">VS</div>
 
                                 <div class="team">
-                                    <img src="${match.awayTeamImage || 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2232%22 height=%2232%22 viewBox=%220 0 32 32%22><circle cx=%2216%22 cy=%2216%22 r=%2216%22 fill=%22%23ddd%22/><text x=%2216%22 y=%2220%22 text-anchor=%22middle%22 fill=%22%23666%22 font-size=%2212%22>⚽</text></svg>'}" alt="${match.awayTeam}" class="team-logo">
+                                    <img src="${match.awayTeamImage}" alt="${match.awayTeam}" class="team-logo"
+                                         onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2232%22 height=%2232%22 viewBox=%220 0 32 32%22><circle cx=%2216%22 cy=%2216%22 r=%2216%22 fill=%22%23ddd%22/><text x=%2216%22 y=%2220%22 text-anchor=%22middle%22 fill=%22%23666%22 font-size=%2212%22>⚽</text></svg>'">
                                     <span class="team-name">${match.awayTeam}</span>
                                 </div>
                             </div>
 
                             <div class="match-info">
                                 <div class="match-time">🕐 ${matchTime}</div>
-                                <div class="match-status scheduled">${statusText}</div>
+                                <div class="match-status ${statusClass}">${statusText}</div>
                             </div>
                         </div>
                     `;
@@ -548,74 +670,89 @@
 
             resultsDiv.innerHTML = html;
 
+            // แสดงข้อความถ้าไม่พบลีกเป้าหมาย
             if (targetLeagueCount === 0) {
                 resultsDiv.innerHTML = `
                     <div class="error">
                         <h3>ไม่พบลีกเป้าหมาย</h3>
-                        <p>ขณะนี้ไม่มีแมตช์ในลีกเป้าหมายที่ต้องการ</p>
+                        <p>ขณะนี้ไม่มีแมตช์ในลีกเป้าหมายในช่วงเวลาที่เลือก</p>
                         <small>ลีกเป้าหมาย: Premier League, La Liga, Serie A, Bundesliga, Ligue 1, Thai Premier League, UEFA Champions League, UEFA Europa League</small>
                     </div>
                 `;
             } else {
-                console.log(`พบ ${targetLeagueCount} ลีกเป้าหมายที่มีแมตช์`);
+                console.log(`Found ${targetLeagueCount} target leagues with matches`);
             }
         }
 
-        // ฟังก์ชันสำหรับโหลดข้อมูล (ใช้ Program Scraper API)
+        function getStatusText(status) {
+            const statusMap = {
+                'SCHEDULED': '⏰ ยังไม่เริ่ม',
+                'LIVE': '🔴 กำลังแข่ง',
+                'HT': '⏸️ พักครึ่ง',
+                'FT': '✅ จบแล้ว',
+                'POSTPONED': '⏳ เลื่อน',
+                'CANCELLED': '❌ ยกเลิก'
+            };
+            return statusMap[status] || status;
+        }
+
         async function loadScheduledMatchesForDate(days) {
             showLoading();
             try {
                 let response;
                 if (days === 0) {
-                    response = await fetch('/api/program/today');
+                    // วันนี้
+                    response = await fetch('/api/matches/today/scheduled/by-league');
                 } else if (days > 0) {
-                    response = await fetch(`/api/program/upcoming?days=${days}`);
+                    // วันข้างหน้า
+                    response = await fetch(`/api/matches/upcoming/scheduled/by-league?days=${days}`);
                 } else {
-                    response = await fetch(`/api/program/date/${days}`);
+                    // วันที่ผ่านมา - ใช้วันนี้แทน (เพราะ API ไม่รองรับวันที่ผ่านมา)
+                    response = await fetch('/api/matches/today/scheduled/by-league');
                 }
                 const data = await response.json();
                 displayMatches(data);
             } catch (error) {
-                showError('ไม่สามารถโหลดข้อมูลโปรแกรมได้: ' + error.message);
+                showError('ไม่สามารถโหลดข้อมูลแมตช์ที่ยังไม่เริ่มได้: ' + error.message);
             }
         }
 
         async function loadTodayMatches() {
             showLoading();
             try {
-                const response = await fetch('/api/program/today');
+                const response = await fetch('/api/matches/today/by-league');
                 const data = await response.json();
                 displayMatches(data);
             } catch (error) {
-                showError('ไม่สามารถโหลดข้อมูลโปรแกรมวันนี้ได้: ' + error.message);
+                showError('ไม่สามารถโหลดข้อมูลแมตช์วันนี้ได้: ' + error.message);
             }
         }
 
         async function loadScheduledMatches() {
             showLoading();
             try {
-                const response = await fetch('/api/program/today');
+                const response = await fetch('/api/matches/today/scheduled/by-league');
                 const data = await response.json();
                 displayMatches(data);
             } catch (error) {
-                showError('ไม่สามารถโหลดข้อมูลโปรแกรมได้: ' + error.message);
+                showError('ไม่สามารถโหลดข้อมูลแมตช์ที่ยังไม่เริ่มได้: ' + error.message);
             }
         }
 
         async function loadUpcomingMatches(days = 3) {
             showLoading();
             try {
-                const response = await fetch(`/api/program/upcoming?days=${days}`);
+                const response = await fetch(`/api/matches/upcoming/scheduled/by-league?days=${days}`);
                 const data = await response.json();
                 displayMatches(data);
             } catch (error) {
-                showError('ไม่สามารถโหลดข้อมูลโปรแกรมข้างหน้าได้: ' + error.message);
+                showError('ไม่สามารถโหลดข้อมูลแมตช์ข้างหน้าได้: ' + error.message);
             }
         }
 
-        // Auto-load today's program on page load
+        // Auto-load today's matches on page load
         document.addEventListener('DOMContentLoaded', function () {
-            loadScheduledMatches();
+            loadScheduledMatches(); // แสดงแมตช์ที่ยังไม่เริ่มเป็นค่าเริ่มต้น
         });
     </script>
 </body>
