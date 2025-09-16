@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>วิธีใช้งาน Football API</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+        }
+
+        h2 {
+            color: #34495e;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+            margin-top: 30px;
+        }
+
+        h3 {
+            color: #2980b9;
+            margin-top: 25px;
+        }
+
+        .api-endpoint {
+            background: #ecf0f1;
+            border-left: 5px solid #3498db;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 5px;
+        }
+
+        .endpoint-url {
+            font-family: 'Courier New', monospace;
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 8px 12px;
+            border-radius: 4px;
+            display: inline-block;
+            margin: 5px 0;
+        }
+
+        .code-block {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            line-height: 1.4;
+        }
+
+        .json-example {
+            background: #27ae60;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+
+        .warning {
+            background: #e74c3c;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+
+        .info {
+            background: #3498db;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+
+        .success {
+            background: #27ae60;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+
+        button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 16px;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background: #2980b9;
+        }
+
+        .test-section {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .result {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 15px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .step {
+            background: #f39c12;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-weight: bold;
+        }
+
+        .example-website {
+            border: 2px solid #3498db;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 10px;
+            background: #f8f9fa;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>⚽ วิธีใช้งาน Football Data API</h1>
+
+        <div class="info">
+            <strong>🎯 สำหรับนักพัฒนาเว็บไซต์:</strong>
+            คู่มือนี้จะแสดงวิธีการเรียกใช้ API เพื่อดึงข้อมูลฟุตบอลไปแสดงในเว็บไซต์ของคุณ
+        </div>
+
+        <h2>📋 API Endpoints ที่พร้อมใช้งาน</h2>
+
+        <div class="api-endpoint">
+            <h3>1. ดึงข้อมูลแมตช์วันนี้</h3>
+            <div class="endpoint-url">GET http://localhost:3001/api/data/matches/today</div>
+            <p><strong>คำอธิบาย:</strong> ดึงข้อมูลการแข่งขันฟุตบอลในวันนี้</p>
+        </div>
+
+        <div class="api-endpoint">
+            <h3>2. ดึงข้อมูลแมตช์ตามวันที่</h3>
+            <div class="endpoint-url">GET http://localhost:3001/api/data/matches/date/{วันที่}</div>
+            <p><strong>คำอธิบาย:</strong> ดึงข้อมูลการแข่งขันในวันอื่นๆ</p>
+            <p><strong>ตัวอย่าง:</strong></p>
+            <ul>
+                <li><code>/api/data/matches/date/0</code> = วันนี้</li>
+                <li><code>/api/data/matches/date/1</code> = พรุ่งนี้</li>
+                <li><code>/api/data/matches/date/2</code> = มะรืนนี้</li>
+            </ul>
+        </div>
+
+        <h2>💻 วิธีเรียกใช้งานใน JavaScript</h2>
+
+        <h3>🔹 วิธีที่ 1: ใช้ fetch() API</h3>
+        <div class="code-block">// ดึงข้อมูลแมตช์วันนี้
+            async function getMatchesToday() {
+            try {
+            const response = await fetch('http://localhost:3001/api/data/matches/today');
+            const data = await response.json();
+
+            if (data.success) {
+            console.log('จำนวนแมตช์:', data.totalMatches);
+            console.log('รายการแมตช์:', data.matches);
+
+            // แสดงผลในเว็บไซต์
+            displayMatches(data.matches);
+            }
+            } catch (error) {
+            console.error('เกิดข้อผิดพลาด:', error);
+            }
+            }
+
+            // ฟังก์ชันแสดงผลแมตช์
+            function displayMatches(matches) {
+            const container = document.getElementById('matches-container');
+            container.innerHTML = '';
+
+            matches.forEach(match => {
+            const matchDiv = document.createElement('div');
+            matchDiv.className = 'match-item';
+            matchDiv.innerHTML = `
+            &lt;h3&gt;${match.homeTeam} vs ${match.awayTeam}&lt;/h3&gt;
+            &lt;p&gt;⏰ ${match.time}&lt;/p&gt;
+            &lt;p&gt;📅 ${match.date}&lt;/p&gt;
+            &lt;p&gt;🏆 ${match.league}&lt;/p&gt;
+            `;
+            container.appendChild(matchDiv);
+            });
+            }</div>
+
+        <h3>🔹 วิธีที่ 2: ใช้ jQuery AJAX</h3>
+        <div class="code-block">// ต้องโหลด jQuery ก่อน: &lt;script
+            src="https://code.jquery.com/jquery-3.6.0.min.js"&gt;&lt;/script&gt;
+
+            $.ajax({
+            url: 'http://localhost:3001/api/data/matches/today',
+            method: 'GET',
+            dataType: 'json',
+            success: function(data) {
+            if (data.success) {
+            $('#total-matches').text(data.totalMatches);
+
+            var html = '';
+            data.matches.forEach(function(match) {
+            html += '&lt;div class="match"&gt;';
+            html += '&lt;h4&gt;' + match.homeTeam + ' vs ' + match.awayTeam + '&lt;/h4&gt;';
+            html += '&lt;p&gt;' + match.time + ' | ' + match.date + '&lt;/p&gt;';
+            html += '&lt;/div&gt;';
+            });
+
+            $('#matches-list').html(html);
+            }
+            },
+            error: function(xhr, status, error) {
+            console.error('Error:', error);
+            }
+            });</div>
+
+        <h2>🌐 ตัวอย่างเว็บไซต์ที่ใช้ API</h2>
+
+        <div class="example-website">
+            <h3>📄 HTML Structure</h3>
+            <div class="code-block">&lt;!DOCTYPE html&gt;
+                &lt;html&gt;
+                &lt;head&gt;
+                &lt;title&gt;ข้อมูลฟุตบอลวันนี้&lt;/title&gt;
+                &lt;style&gt;
+                .match-item {
+                border: 1px solid #ddd;
+                padding: 15px;
+                margin: 10px 0;
+                border-radius: 5px;
+                background: #f9f9f9;
+                }
+                .loading { color: #666; }
+                .error { color: red; }
+                &lt;/style&gt;
+                &lt;/head&gt;
+                &lt;body&gt;
+                &lt;h1&gt;🏟️ ข้อมูลฟุตบอลวันนี้&lt;/h1&gt;
+
+                &lt;div id="status"&gt;กำลังโหลด...&lt;/div&gt;
+                &lt;div id="total-matches"&gt;&lt;/div&gt;
+                &lt;div id="matches-container"&gt;&lt;/div&gt;
+
+                &lt;script&gt;
+                // JavaScript code ตามตัวอย่างด้านบน
+                &lt;/script&gt;
+                &lt;/body&gt;
+                &lt;/html&gt;</div>
+        </div>
+
+        <h2>📊 ตัวอย่างข้อมูลที่ได้รับ (JSON Response)</h2>
+
+        <div class="json-example">{
+            "success": true,
+            "date": "2025-09-14",
+            "totalMatches": 2,
+            "matches": [
+            {
+            "id": 1,
+            "homeTeam": "แมนยู",
+            "awayTeam": "ลิเวอร์พูล",
+            "time": "19:00",
+            "date": "2025-09-14",
+            "league": "Premier League"
+            },
+            {
+            "id": 2,
+            "homeTeam": "บาร์เซโลนา",
+            "awayTeam": "เรอัล มาดริด",
+            "time": "21:30",
+            "date": "2025-09-14",
+            "league": "La Liga"
+            }
+            ],
+            "timestamp": "2025-09-13T20:45:30.123Z"
+            }</div>
+
+        <h2>⚠️ สิ่งที่ต้องระวัง</h2>
+
+        <div class="warning">
+            <strong>CORS Policy:</strong> API นี้ได้เปิดใช้งาน CORS แล้ว สามารถเรียกใช้จากเว็บไซต์อื่นได้โดยตรง
+        </div>
+
+        <div class="info">
+            <strong>Cache:</strong> ข้อมูลจะถูก cache ไว้ 2 นาที เพื่อความเร็วและลดการใช้ทรัพยากร
+        </div>
+
+        <div class="success">
+            <strong>Real-time:</strong> ข้อมูลจะถูกอัพเดทแบบ real-time จากแหล่งข้อมูลต้นทาง
+        </div>
+
+        <h2>🧪 ทดสอบ API ทันที</h2>
+
+        <div class="test-section">
+            <p>คลิกปุ่มด้านล่างเพื่อทดสอบ API endpoints:</p>
+
+            <button onclick="testEndpoint('/api/data/matches/today')">
+                📅 ดึงแมตช์วันนี้
+            </button>
+
+            <button onclick="testEndpoint('/api/data/matches/date/1')">
+                ⏭️ ดึงแมตช์พรุ่งนี้
+            </button>
+
+            <button onclick="testEndpoint('/api/health')">
+                💚 ตรวจสอบ Server
+            </button>
+
+            <div id="test-result" class="result" style="display: none;"></div>
+        </div>
+
+        <h2>🚀 ขั้นตอนการเริ่มใช้งาน</h2>
+
+        <div class="step">1. เริ่ม API Server: เปิด Terminal และรัน <code>node server.js</code></div>
+        <div class="step">2. ตรวจสอบ: เปิดเบราว์เซอร์ไปที่ http://localhost:3001</div>
+        <div class="step">3. เรียกใช้: ใช้ JavaScript fetch() หรือ jQuery AJAX</div>
+        <div class="step">4. แสดงผล: นำข้อมูลที่ได้มาแสดงในเว็บไซต์</div>
+
+    </div>
+
+    <script>
+        async function testEndpoint(endpoint) {
+            const resultDiv = document.getElementById('test-result');
+            resultDiv.style.display = 'block';
+            resultDiv.textContent = `กำลังทดสอบ ${endpoint}...`;
+
+            try {
+                const response = await fetch('http://localhost:3001' + endpoint);
+                const data = await response.json();
+
+                if (response.ok) {
+                    resultDiv.textContent = `✅ สำเร็จ!\n\n${JSON.stringify(data, null, 2)}`;
+                } else {
+                    resultDiv.textContent = `❌ ข้อผิดพลาด: ${response.status}`;
+                }
+            } catch (error) {
+                resultDiv.textContent = `❌ ไม่สามารถเชื่อมต่อ API Server\n\nกรุณาตรวจสอบว่า:\n1. Server กำลังทำงานอยู่หรือไม่ (node server.js)\n2. Port 3001 พร้อมใช้งานหรือไม่\n\nError: ${error.message}`;
+            }
+        }
+    </script>
+</body>
+
+</html>

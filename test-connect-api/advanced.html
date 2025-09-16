@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced API Testing - Football Data</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #667eea 100%);
+            min-height: 100vh;
+            color: #333;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.8rem;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .sidebar {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            height: fit-content;
+        }
+
+        .main-content {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .endpoint-section {
+            margin-bottom: 25px;
+        }
+
+        .endpoint-section h3 {
+            color: #1e3c72;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .endpoint-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            margin-bottom: 8px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .endpoint-item:hover {
+            background: #e3f2fd;
+            transform: translateX(5px);
+        }
+
+        .endpoint-method {
+            background: #4caf50;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            min-width: 50px;
+            text-align: center;
+        }
+
+        .endpoint-url {
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            color: #333;
+            flex: 1;
+        }
+
+        .test-btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .test-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #ccc;
+            transition: all 0.3s ease;
+        }
+
+        .status-indicator.success {
+            background: #4caf50;
+            box-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
+        }
+
+        .status-indicator.error {
+            background: #f44336;
+            box-shadow: 0 0 10px rgba(244, 67, 54, 0.5);
+        }
+
+        .status-indicator.loading {
+            background: #ff9800;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 0.7;
+                transform: scale(1.1);
+            }
+        }
+
+        .results-section {
+            margin-top: 20px;
+        }
+
+        .tab-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            background: #f0f0f0;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+
+        .tab-btn.active {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .json-viewer {
+            background: #1e1e1e;
+            color: #dcdcdc;
+            border-radius: 8px;
+            padding: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            max-height: 500px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            border: 1px solid #444;
+        }
+
+        .performance-metrics {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .metric-card {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .metric-value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .metric-label {
+            font-size: 0.8rem;
+            opacity: 0.9;
+        }
+
+        .log-entry {
+            padding: 8px 12px;
+            margin-bottom: 5px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            border-left: 4px solid;
+        }
+
+        .log-entry.info {
+            background: #e3f2fd;
+            border-color: #2196f3;
+            color: #0d47a1;
+        }
+
+        .log-entry.success {
+            background: #e8f5e8;
+            border-color: #4caf50;
+            color: #1b5e20;
+        }
+
+        .log-entry.error {
+            background: #ffebee;
+            border-color: #f44336;
+            color: #b71c1c;
+        }
+
+        .controls-panel {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .control-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .control-btn {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .control-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .control-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        @media (max-width: 1024px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .performance-metrics {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .control-group {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-rocket"></i> Advanced API Testing</h1>
+            <p>ระบบทดสอบ API ขั้นสูงสำหรับ Football Data Server</p>
+        </div>
+
+        <div class="controls-panel">
+            <div class="control-group">
+                <button class="control-btn" onclick="testAllEndpoints()">
+                    <i class="fas fa-play"></i> ทดสอบทั้งหมด
+                </button>
+                <button class="control-btn" onclick="clearAllResults()">
+                    <i class="fas fa-trash"></i> ล้างผลลัพธ์
+                </button>
+                <button class="control-btn" onclick="exportResults()">
+                    <i class="fas fa-download"></i> ส่งออกผลลัพธ์
+                </button>
+                <button class="control-btn" onclick="startStressTest()">
+                    <i class="fas fa-fire"></i> Stress Test
+                </button>
+            </div>
+        </div>
+
+        <div class="dashboard">
+            <div class="sidebar">
+                <div class="endpoint-section">
+                    <h3><i class="fas fa-book"></i> API Documentation</h3>
+                    <div class="endpoint-item" onclick="testEndpoint('/', 'documentation')">
+                        <div class="status-indicator" id="status-documentation"></div>
+                        <div class="endpoint-method">GET</div>
+                        <div class="endpoint-url">/</div>
+                        <button class="test-btn">Test</button>
+                    </div>
+                </div>
+
+                <div class="endpoint-section">
+                    <h3><i class="fas fa-heart"></i> Health & Status</h3>
+                    <div class="endpoint-item" onclick="testEndpoint('/api/health', 'health')">
+                        <div class="status-indicator" id="status-health"></div>
+                        <div class="endpoint-method">GET</div>
+                        <div class="endpoint-url">/api/health</div>
+                        <button class="test-btn">Test</button>
+                    </div>
+                    <div class="endpoint-item" onclick="testEndpoint('/api/status', 'server-status')">
+                        <div class="status-indicator" id="status-server-status"></div>
+                        <div class="endpoint-method">GET</div>
+                        <div class="endpoint-url">/api/status</div>
+                        <button class="test-btn">Test</button>
+                    </div>
+                    <div class="endpoint-item" onclick="testEndpoint('/api/test', 'test')">
+                        <div class="status-indicator" id="status-test"></div>
+                        <div class="endpoint-method">GET</div>
+                        <div class="endpoint-url">/api/test</div>
+                        <button class="test-btn">Test</button>
+                    </div>
+                </div>
+
+                <div class="endpoint-section">
+                    <h3><i class="fas fa-chart-line"></i> Performance</h3>
+                    <div class="performance-metrics" id="performance-metrics">
+                        <div class="metric-card">
+                            <div class="metric-value" id="total-requests">0</div>
+                            <div class="metric-label">Total Requests</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value" id="success-rate">0%</div>
+                            <div class="metric-label">Success Rate</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value" id="avg-response">0ms</div>
+                            <div class="metric-label">Avg Response</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-value" id="fastest-response">0ms</div>
+                            <div class="metric-label">Fastest</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="main-content">
+                <div class="results-section">
+                    <div class="tab-buttons">
+                        <button class="tab-btn active" onclick="switchTab('response')">
+                            <i class="fas fa-code"></i> Response
+                        </button>
+                        <button class="tab-btn" onclick="switchTab('logs')">
+                            <i class="fas fa-list"></i> Logs
+                        </button>
+                        <button class="tab-btn" onclick="switchTab('analytics')">
+                            <i class="fas fa-chart-bar"></i> Analytics
+                        </button>
+                    </div>
+
+                    <div class="tab-content active" id="response-tab">
+                        <div class="json-viewer" id="response-viewer">
+                            <div style="text-align: center; padding: 40px; color: #888;">
+                                <i class="fas fa-code" style="font-size: 3rem; margin-bottom: 20px;"></i>
+                                <h3>พร้อมทดสอบ API</h3>
+                                <p>เลือก endpoint จากด้านซ้ายเพื่อเริ่มทดสอบ</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tab-content" id="logs-tab">
+                        <div class="json-viewer" id="logs-viewer">
+                            <div style="text-align: center; padding: 40px; color: #888;">
+                                <i class="fas fa-list" style="font-size: 3rem; margin-bottom: 20px;"></i>
+                                <h3>Log Viewer</h3>
+                                <p>Logs จะแสดงที่นี่เมื่อทำการทดสอบ</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tab-content" id="analytics-tab">
+                        <div class="json-viewer" id="analytics-viewer">
+                            <div style="text-align: center; padding: 40px; color: #888;">
+                                <i class="fas fa-chart-bar" style="font-size: 3rem; margin-bottom: 20px;"></i>
+                                <h3>Analytics</h3>
+                                <p>สถิติการทดสอบจะแสดงที่นี่</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:3001';
+
+        // Global state
+        let testResults = {};
+        let logs = [];
+        let metrics = {
+            totalRequests: 0,
+            successfulRequests: 0,
+            responseTimes: []
+        };
+
+        // Tab switching
+        function switchTab(tabName) {
+            // Remove active class from all tabs
+            document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+
+            // Add active class to selected tab
+            event.target.classList.add('active');
+            document.getElementById(tabName + '-tab').classList.add('active');
+        }
+
+        // Logging system
+        function addLog(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = { timestamp, message, type };
+            logs.push(logEntry);
+
+            updateLogsViewer();
+        }
+
+        function updateLogsViewer() {
+            const logsViewer = document.getElementById('logs-viewer');
+            logsViewer.innerHTML = logs.map(log =>
+                `<div class="log-entry ${log.type}">[${log.timestamp}] ${log.message}</div>`
+            ).join('');
+            logsViewer.scrollTop = logsViewer.scrollHeight;
+        }
+
+        // Performance tracking
+        function updateMetrics() {
+            const successRate = metrics.totalRequests > 0
+                ? Math.round((metrics.successfulRequests / metrics.totalRequests) * 100)
+                : 0;
+
+            const avgResponse = metrics.responseTimes.length > 0
+                ? Math.round(metrics.responseTimes.reduce((a, b) => a + b, 0) / metrics.responseTimes.length)
+                : 0;
+
+            const fastestResponse = metrics.responseTimes.length > 0
+                ? Math.min(...metrics.responseTimes)
+                : 0;
+
+            document.getElementById('total-requests').textContent = metrics.totalRequests;
+            document.getElementById('success-rate').textContent = successRate + '%';
+            document.getElementById('avg-response').textContent = avgResponse + 'ms';
+            document.getElementById('fastest-response').textContent = fastestResponse + 'ms';
+        }
+
+        // API testing
+        async function testEndpoint(endpoint, statusId) {
+            const startTime = Date.now();
+            const statusIndicator = document.getElementById(`status-${statusId}`);
+
+            // Set loading state
+            statusIndicator.className = 'status-indicator loading';
+            addLog(`Starting test for ${endpoint}`, 'info');
+
+            try {
+                const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                const endTime = Date.now();
+                const responseTime = endTime - startTime;
+
+                // Update metrics
+                metrics.totalRequests++;
+                metrics.responseTimes.push(responseTime);
+
+                if (response.ok) {
+                    const data = await response.json();
+
+                    // Update UI
+                    statusIndicator.className = 'status-indicator success';
+                    metrics.successfulRequests++;
+
+                    // Store result
+                    testResults[endpoint] = {
+                        success: true,
+                        data,
+                        responseTime,
+                        timestamp: new Date().toISOString()
+                    };
+
+                    // Update response viewer
+                    document.getElementById('response-viewer').textContent = JSON.stringify(data, null, 2);
+
+                    addLog(`✅ ${endpoint} - Success (${responseTime}ms)`, 'success');
+                } else {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+            } catch (error) {
+                const endTime = Date.now();
+                const responseTime = endTime - startTime;
+
+                // Update metrics
+                metrics.totalRequests++;
+                metrics.responseTimes.push(responseTime);
+
+                // Update UI
+                statusIndicator.className = 'status-indicator error';
+
+                // Store result
+                testResults[endpoint] = {
+                    success: false,
+                    error: error.message,
+                    responseTime,
+                    timestamp: new Date().toISOString()
+                };
+
+                // Update response viewer
+                document.getElementById('response-viewer').textContent = `Error: ${error.message}`;
+
+                addLog(`❌ ${endpoint} - Error: ${error.message} (${responseTime}ms)`, 'error');
+            }
+
+            updateMetrics();
+            updateAnalytics();
+        }
+
+        // Test all endpoints
+        async function testAllEndpoints() {
+            addLog('Starting full test suite...', 'info');
+
+            const endpoints = [
+                { url: '/', id: 'documentation' },
+                { url: '/api/health', id: 'health' },
+                { url: '/api/status', id: 'server-status' },
+                { url: '/api/test', id: 'test' }
+            ];
+
+            for (const endpoint of endpoints) {
+                await testEndpoint(endpoint.url, endpoint.id);
+                // Small delay between requests
+                await new Promise(resolve => setTimeout(resolve, 500));
+            }
+
+            addLog('Full test suite completed!', 'success');
+        }
+
+        // Clear all results
+        function clearAllResults() {
+            testResults = {};
+            logs = [];
+            metrics = {
+                totalRequests: 0,
+                successfulRequests: 0,
+                responseTimes: []
+            };
+
+            // Reset UI
+            document.querySelectorAll('.status-indicator').forEach(indicator => {
+                indicator.className = 'status-indicator';
+            });
+
+            document.getElementById('response-viewer').innerHTML = `
+                <div style="text-align: center; padding: 40px; color: #888;">
+                    <i class="fas fa-code" style="font-size: 3rem; margin-bottom: 20px;"></i>
+                    <h3>พร้อมทดสอบ API</h3>
+                    <p>เลือก endpoint จากด้านซ้ายเพื่อเริ่มทดสอบ</p>
+                </div>
+            `;
+
+            updateLogsViewer();
+            updateMetrics();
+            updateAnalytics();
+        }
+
+        // Export results
+        function exportResults() {
+            const exportData = {
+                timestamp: new Date().toISOString(),
+                results: testResults,
+                logs: logs,
+                metrics: metrics,
+                summary: {
+                    totalTests: metrics.totalRequests,
+                    successfulTests: metrics.successfulRequests,
+                    successRate: metrics.totalRequests > 0 ? (metrics.successfulRequests / metrics.totalRequests * 100).toFixed(2) + '%' : '0%',
+                    averageResponseTime: metrics.responseTimes.length > 0 ? (metrics.responseTimes.reduce((a, b) => a + b, 0) / metrics.responseTimes.length).toFixed(2) + 'ms' : '0ms'
+                }
+            };
+
+            const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `api-test-results-${Date.now()}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+
+            addLog('Test results exported successfully', 'success');
+        }
+
+        // Stress test
+        async function startStressTest() {
+            addLog('Starting stress test...', 'info');
+
+            const requests = 10;
+            const endpoint = '/api/test';
+            const promises = [];
+
+            for (let i = 0; i < requests; i++) {
+                promises.push(testEndpoint(endpoint, 'test'));
+            }
+
+            await Promise.all(promises);
+            addLog(`Stress test completed: ${requests} concurrent requests`, 'success');
+        }
+
+        // Analytics
+        function updateAnalytics() {
+            const analyticsViewer = document.getElementById('analytics-viewer');
+
+            const analytics = {
+                overview: {
+                    totalRequests: metrics.totalRequests,
+                    successfulRequests: metrics.successfulRequests,
+                    failedRequests: metrics.totalRequests - metrics.successfulRequests,
+                    successRate: metrics.totalRequests > 0 ? ((metrics.successfulRequests / metrics.totalRequests) * 100).toFixed(2) + '%' : '0%'
+                },
+                performance: {
+                    averageResponseTime: metrics.responseTimes.length > 0 ? (metrics.responseTimes.reduce((a, b) => a + b, 0) / metrics.responseTimes.length).toFixed(2) + 'ms' : '0ms',
+                    fastestResponse: metrics.responseTimes.length > 0 ? Math.min(...metrics.responseTimes) + 'ms' : '0ms',
+                    slowestResponse: metrics.responseTimes.length > 0 ? Math.max(...metrics.responseTimes) + 'ms' : '0ms'
+                },
+                endpoints: Object.keys(testResults).map(endpoint => ({
+                    endpoint,
+                    status: testResults[endpoint].success ? 'Success' : 'Failed',
+                    responseTime: testResults[endpoint].responseTime + 'ms',
+                    lastTested: new Date(testResults[endpoint].timestamp).toLocaleString()
+                }))
+            };
+
+            analyticsViewer.textContent = JSON.stringify(analytics, null, 2);
+        }
+
+        // Initialize
+        window.addEventListener('load', () => {
+            addLog('🚀 Advanced API Tester initialized', 'success');
+            addLog(`📡 API Base URL: ${API_BASE_URL}`, 'info');
+        });
+    </script>
+</body>
+
+</html>
