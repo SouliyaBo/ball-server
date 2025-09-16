@@ -42,11 +42,9 @@ WORKDIR /usr/src/app
 
 # คัดลอก package files
 COPY package*.json ./
-COPY pnpm-lock.yaml ./
 
-# ติดตั้ง pnpm และ dependencies
-RUN npm install -g pnpm
-RUN pnpm install --frozen-lockfile
+# ติดตั้ง dependencies ด้วย npm (เพื่อความเสถียร)
+RUN npm ci --only=production
 
 # คัดลอกไฟล์ source code ทั้งหมด
 COPY . .
