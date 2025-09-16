@@ -4,7 +4,7 @@ const PuppeteerProgramScraper = require('./PuppeteerProgramScraper');
 const PuppeteerDataExtractor = require('./PuppeteerDataExtractor');
 
 const app = express();
-const PORT = 3001;
+const PORT = 8080;
 
 // Middleware
 app.use((req, res, next) => {

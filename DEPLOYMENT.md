@@ -9,14 +9,14 @@
 - **Operating System**: Ubuntu 22.04 LTS
 - **Storage**: อย่างน้อย 20GB SSD
 - **Memory**: อย่างน้อย 4GB RAM
-- **Network**: Security Group ที่เปิด ports: 22, 80, 443, 3001
+- **Network**: Security Group ที่เปิด ports: 22, 80, 443, 8080
 
 ### Security Group Settings
 ```
 Port 22   (SSH)     - Your IP only
 Port 80   (HTTP)    - 0.0.0.0/0
 Port 443  (HTTPS)   - 0.0.0.0/0
-Port 3001 (API)     - 0.0.0.0/0
+Port 8080 (API)     - 0.0.0.0/0
 Port 9000 (Monitor) - Your IP only (optional)
 ```
 
@@ -91,7 +91,7 @@ sudo ufw default allow outgoing
 sudo ufw allow ssh
 sudo ufw allow 80/tcp
 sudo ufw allow 443/tcp
-sudo ufw allow 3001/tcp
+sudo ufw allow 8080/tcp
 sudo ufw --force enable
 ```
 
@@ -109,7 +109,7 @@ docker-compose up -d
 ```env
 # Server Configuration
 NODE_ENV=production
-PORT=3001
+PORT=8080
 
 # Puppeteer Settings
 PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
@@ -174,20 +174,20 @@ docker stats
 docker-compose logs -f football-api
 
 # ตรวจสอบ API health
-curl http://localhost:3001/api/health
+curl http://localhost:8080/api/health
 
 # ดูจำนวน requests
-curl http://localhost:3001/api/status
+curl http://localhost:8080/api/status
 ```
 
 ## 📊 Service URLs
 
 หลังจาก deployment สำเร็จ:
 
-- **API Server**: `http://your-server-ip:3001`
+- **API Server**: `http://your-server-ip:8080`
 - **Web Interface**: `http://your-server-ip`
-- **API Documentation**: `http://your-server-ip:3001/`
-- **Health Check**: `http://your-server-ip:3001/api/health`
+- **API Documentation**: `http://your-server-ip:8080/`
+- **Health Check**: `http://your-server-ip:8080/api/health`
 - **Portainer (Monitoring)**: `http://your-server-ip:9000`
 
 ### API Endpoints
@@ -240,7 +240,7 @@ sudo swapon /swapfile
 #### 4. Network Issues
 ```bash
 # ตรวจสอบ ports
-netstat -tlnp | grep :3001
+netstat -tlnp | grep :8080
 
 # ตรวจสอบ firewall
 sudo ufw status
@@ -313,7 +313,7 @@ deploy:
 1. ตรวจสอบ logs: `docker-compose logs -f`
 2. ตรวจสอบ system resources: `htop`
 3. ดู container status: `docker-compose ps`
-4. Test API manually: `curl http://localhost:3001/api/health`
+4. Test API manually: `curl http://localhost:8080/api/health`
 
 ## 🔄 Updates
 

@@ -135,7 +135,7 @@ configure_firewall() {
     sudo ufw allow 443/tcp
 
     # Allow our API port
-    sudo ufw allow 3001/tcp
+    sudo ufw allow 8080/tcp
 
     # Enable firewall
     sudo ufw --force enable
@@ -167,7 +167,7 @@ create_env_file() {
     cat > .env << EOF
 # Football API Server Environment Configuration
 NODE_ENV=production
-PORT=3001
+PORT=8080
 
 # Puppeteer configurations
 PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
@@ -202,7 +202,7 @@ events {
 
 http {
     upstream football_api {
-        server football-api:3001;
+        server football-api:8080;
     }
 
     server {
@@ -309,7 +309,7 @@ check_containers() {
 
 # Check API health
 check_api_health() {
-    local response=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3001/api/health)
+    local response=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/api/health)
 
     if [ "$response" != "200" ]; then
         log_message "ERROR: API health check failed (HTTP $response). Restarting containers..."
@@ -391,7 +391,7 @@ main() {
         docker-compose ps
 
         info "=== Deployment Complete ==="
-        info "API Server: http://$(curl -s ifconfig.me):3001"
+        info "API Server: http://$(curl -s ifconfig.me):8080"
         info "Web Server: http://$(curl -s ifconfig.me)"
         info "Monitoring: http://$(curl -s ifconfig.me):9000 (Portainer)"
         info ""

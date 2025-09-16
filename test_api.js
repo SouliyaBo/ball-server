@@ -3,7 +3,7 @@ const http = require('http');
 // ทดสอบ API
 const options = {
     hostname: 'localhost',
-    port: 3001,
+    port: 8080,
     path: '/api/test',
     method: 'GET'
 };

@@ -56,13 +56,13 @@ RUN groupadd -r nodejs && useradd -r -g nodejs nodejs
 RUN chown -R nodejs:nodejs /usr/src/app
 USER nodejs
 
-# เปิด port 3001
-EXPOSE 3001
+# เปิด port 8080
+EXPOSE 8080
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD node -e "const http = require('http'); \
-    const req = http.request('http://localhost:3001/api/health', (res) => { \
+    const req = http.request('http://localhost:8080/api/health', (res) => { \
     process.exit(res.statusCode === 200 ? 0 : 1); \
     }); \
     req.on('error', () => process.exit(1)); \
