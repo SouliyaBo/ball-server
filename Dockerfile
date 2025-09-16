@@ -68,8 +68,17 @@ RUN npm ci --only=production
 # คัดลอกไฟล์ source code ทั้งหมด
 COPY . .
 
-# เปลี่ยนเป็น user nodejs และตั้งค่า permissions
-RUN chown -R nodejs:nodejs /usr/src/app
+# สร้าง user nodejs และตั้งค่า permissions ที่ถูกต้อง
+RUN groupadd -r nodejs && useradd -r -g nodejs -G audio,video nodejs \
+    && mkdir -p /home/nodejs/.local/share/applications \
+    && mkdir -p /home/nodejs/Downloads \
+    && mkdir -p /tmp/.X11-unix \
+    && chmod 1777 /tmp/.X11-unix \
+    && chown -R nodejs:nodejs /home/nodejs \
+    && chown -R nodejs:nodejs /usr/src/app \
+    && chmod -R 755 /home/nodejs
+
+# เปลี่ยนเป็น user nodejs
 USER nodejs
 
 # เปิด port 8080

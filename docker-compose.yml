@@ -34,6 +34,11 @@ services:
     networks:
       - football-network
 
+    # เพิ่ม security options และ shared memory
+    security_opt:
+      - seccomp:unconfined
+    shm_size: 2gb
+
     # Resource limits
     deploy:
       resources:
