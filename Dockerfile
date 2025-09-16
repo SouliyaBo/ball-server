@@ -45,10 +45,14 @@ RUN wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | gpg --dearm
     && apt-get install -y google-chrome-stable \
     && rm -rf /var/lib/apt/lists/*
 
-# สร้าง user nodejs ก่อนตั้งค่า environment
-RUN groupadd -r nodejs && useradd -r -g nodejs -G audio,video nodejs \
-    && mkdir -p /home/nodejs/Downloads /home/nodejs/.local/share \
-    && chown -R nodejs:nodejs /home/nodejs
+# สร้าง user nodejs และ home directory
+RUN groupadd nodejs && useradd -m -g nodejs -G audio,video nodejs \
+    && mkdir -p /home/nodejs/.local/share/applications \
+    && mkdir -p /home/nodejs/Downloads \
+    && mkdir -p /tmp/.X11-unix \
+    && chmod 1777 /tmp/.X11-unix \
+    && chown -R nodejs:nodejs /home/nodejs \
+    && chmod -R 755 /home/nodejs
 
 # ตั้งค่า environment variables สำหรับ Puppeteer
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
@@ -68,17 +72,10 @@ RUN npm ci --only=production
 # คัดลอกไฟล์ source code ทั้งหมด
 COPY . .
 
-# สร้าง user nodejs และตั้งค่า permissions ที่ถูกต้อง
-RUN groupadd -r nodejs && useradd -r -g nodejs -G audio,video nodejs \
-    && mkdir -p /home/nodejs/.local/share/applications \
-    && mkdir -p /home/nodejs/Downloads \
-    && mkdir -p /tmp/.X11-unix \
-    && chmod 1777 /tmp/.X11-unix \
-    && chown -R nodejs:nodejs /home/nodejs \
-    && chown -R nodejs:nodejs /usr/src/app \
-    && chmod -R 755 /home/nodejs
+# ตั้งค่า permissions สำหรับ app directory และเปลี่ยนเป็น user nodejs
+RUN chown -R nodejs:nodejs /usr/src/app \
+    && chmod -R 755 /usr/src/app
 
-# เปลี่ยนเป็น user nodejs
 USER nodejs
 
 # เปิด port 8080
