@@ -1,0 +1,121 @@
+version: '3.8'
+
+services:
+  # Football API Server
+  football-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: football-api-server
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      # Node.js environment
+      - NODE_ENV=production
+      - PORT=3001
+
+      # Puppeteer configurations
+      - PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true
+      - PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome-stable
+      - PUPPETEER_ARGS=--no-sandbox,--disable-setuid-sandbox,--disable-dev-shm-usage,--disable-gpu
+
+      # API configurations
+      - API_CACHE_DURATION=120000 # 2 minutes in milliseconds
+      - API_TIMEOUT=30000 # 30 seconds timeout
+
+      # Log level
+      - LOG_LEVEL=info
+
+    volumes:
+      # Mount logs directory (optional)
+      - ./logs:/usr/src/app/logs
+
+    networks:
+      - football-network
+
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
+    # Health check
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:3001/api/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+    # Labels for monitoring
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.football-api.rule=PathPrefix(/)"
+      - "traefik.http.routers.football-api.entrypoints=web"
+      - "traefik.http.services.football-api.loadbalancer.server.port=3001"
+
+  # Nginx Reverse Proxy (Optional)
+  nginx:
+    image: nginx:alpine
+    container_name: football-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro # SSL certificates (if needed)
+    depends_on:
+      - football-api
+    networks:
+      - football-network
+    labels:
+      - "traefik.enable=false"
+
+  # Redis for caching (Optional - if you want persistent cache)
+  redis:
+    image: redis:7-alpine
+    container_name: football-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - football-network
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-footballapi123}
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-footballapi123}
+
+  # Monitoring with Portainer (Optional)
+  portainer:
+    image: portainer/portainer-ce:latest
+    container_name: football-portainer
+    restart: unless-stopped
+    ports:
+      - "9000:9000"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer-data:/data
+    networks:
+      - football-network
+    profiles:
+      - monitoring
+
+networks:
+  football-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+volumes:
+  redis-data:
+    driver: local
+  portainer-data:
+    driver: local

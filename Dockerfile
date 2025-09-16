@@ -1,7 +1,7 @@
-# Use Node.js version 18 as the base
+# ใช้ Node.js 18 เป็น base image
 FROM node:18-slim
 
-# Install necessary dependencies for Puppeteer, including the missing library
+# ติดตั้ง dependencies ที่จำเป็นสำหรับ Puppeteer
 RUN apt-get update && apt-get install -y \
     ca-certificates \
     fonts-liberation \
@@ -22,18 +22,51 @@ RUN apt-get update && apt-get install -y \
     libcairo2 \
     libasound2 \
     libxkbcommon0 \
-    --no-install-recommends \
+    wget \
+    gnupg \
+    --no-install-recommends
+
+# ติดตั้ง Google Chrome
+RUN wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | apt-key add - \
+    && sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list' \
+    && apt-get update \
+    && apt-get install -y google-chrome-stable \
     && rm -rf /var/lib/apt/lists/*
 
-# Set the working directory
+# ตั้งค่า environment variables สำหรับ Puppeteer
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
+    PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome-stable
+
+# สร้าง directory สำหรับ app
 WORKDIR /usr/src/app
 
-# Copy package.json and install dependencies
+# คัดลอก package files
 COPY package*.json ./
-RUN npm install
+COPY pnpm-lock.yaml ./
 
-# Copy our script code
-COPY index.js .
+# ติดตั้ง pnpm และ dependencies
+RUN npm install -g pnpm
+RUN pnpm install --frozen-lockfile
 
-# Command to run when the container starts
-CMD [ "node", "index.js" ]
+# คัดลอกไฟล์ source code ทั้งหมด
+COPY . .
+
+# สร้าง user ที่ไม่ใช่ root เพื่อความปลอดภัย
+RUN groupadd -r nodejs && useradd -r -g nodejs nodejs
+RUN chown -R nodejs:nodejs /usr/src/app
+USER nodejs
+
+# เปิด port 3001
+EXPOSE 3001
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD node -e "const http = require('http'); \
+    const req = http.request('http://localhost:3001/api/health', (res) => { \
+    process.exit(res.statusCode === 200 ? 0 : 1); \
+    }); \
+    req.on('error', () => process.exit(1)); \
+    req.end();"
+
+# รันแอปพลิเคชัน
+CMD ["node", "server.js"]
