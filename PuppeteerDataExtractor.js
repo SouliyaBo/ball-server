@@ -22,8 +22,17 @@ class PuppeteerDataExtractor {
                     '--disable-accelerated-2d-canvas',
                     '--no-first-run',
                     '--no-zygote',
-                    '--disable-gpu'
-                ]
+                    '--disable-gpu',
+                    '--disable-web-security',
+                    '--disable-features=VizDisplayCompositor',
+                    '--run-all-compositor-stages-before-draw',
+                    '--disable-background-timer-throttling',
+                    '--disable-renderer-backgrounding',
+                    '--disable-backgrounding-occluded-windows',
+                    '--disable-ipc-flooding-protection',
+                    '--disable-extensions'
+                ],
+                executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/google-chrome-stable'
             });
             console.log('✅ Puppeteer Browser พร้อมใช้งานสำหรับ Data Extraction');
         }

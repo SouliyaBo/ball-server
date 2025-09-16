@@ -1,7 +1,7 @@
 # ใช้ Node.js 18 เป็น base image
 FROM node:18-slim
 
-# ติดตั้ง dependencies ที่จำเป็นสำหรับ Puppeteer
+# ติดตั้ง dependencies ที่จำเป็นสำหรับ Puppeteer และ Chrome
 RUN apt-get update && apt-get install -y \
     ca-certificates \
     fonts-liberation \
@@ -22,20 +22,39 @@ RUN apt-get update && apt-get install -y \
     libcairo2 \
     libasound2 \
     libxkbcommon0 \
+    libxss1 \
+    libgconf-2-4 \
+    libxtst6 \
+    libxrandr2 \
+    libasound2 \
+    libpangocairo-1.0-0 \
+    libatk1.0-0 \
+    libcairo-gobject2 \
+    libgtk-3-0 \
+    libgdk-pixbuf2.0-0 \
     wget \
+    curl \
     gnupg \
+    xvfb \
     --no-install-recommends
 
 # ติดตั้ง Google Chrome
-RUN wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | apt-key add - \
-    && sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list' \
+RUN wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | gpg --dearmor -o /usr/share/keyrings/googlechrome-linux-keyring.gpg \
+    && sh -c 'echo "deb [arch=amd64 signed-by=/usr/share/keyrings/googlechrome-linux-keyring.gpg] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list' \
     && apt-get update \
     && apt-get install -y google-chrome-stable \
     && rm -rf /var/lib/apt/lists/*
 
+# สร้าง user nodejs ก่อนตั้งค่า environment
+RUN groupadd -r nodejs && useradd -r -g nodejs -G audio,video nodejs \
+    && mkdir -p /home/nodejs/Downloads /home/nodejs/.local/share \
+    && chown -R nodejs:nodejs /home/nodejs
+
 # ตั้งค่า environment variables สำหรับ Puppeteer
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
-    PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome-stable
+    PUPPETEER_EXECUTABLE_PATH=/usr/bin/google-chrome-stable \
+    DISPLAY=:99 \
+    HOME=/home/nodejs
 
 # สร้าง directory สำหรับ app
 WORKDIR /usr/src/app
@@ -49,8 +68,7 @@ RUN npm ci --only=production
 # คัดลอกไฟล์ source code ทั้งหมด
 COPY . .
 
-# สร้าง user ที่ไม่ใช่ root เพื่อความปลอดภัย
-RUN groupadd -r nodejs && useradd -r -g nodejs nodejs
+# เปลี่ยนเป็น user nodejs และตั้งค่า permissions
 RUN chown -R nodejs:nodejs /usr/src/app
 USER nodejs
 
@@ -59,12 +77,7 @@ EXPOSE 8080
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD node -e "const http = require('http'); \
-    const req = http.request('http://localhost:8080/api/health', (res) => { \
-    process.exit(res.statusCode === 200 ? 0 : 1); \
-    }); \
-    req.on('error', () => process.exit(1)); \
-    req.end();"
+    CMD curl -f http://localhost:8080/api/health || exit 1
 
-# รันแอปพลิเคชัน
-CMD ["node", "server.js"]
+# รันแอปพลิเคชันด้วย Xvfb (virtual display)
+CMD ["sh", "-c", "Xvfb :99 -screen 0 1024x768x24 > /dev/null 2>&1 & node server.js"]
