@@ -4,12 +4,12 @@ echo "🔧 Force fix server routes..."
 
 # Stop container
 echo "Stopping container..."
-sudo docker-compose down
+docker-compose down
 
 # Remove container and image to force rebuild
 echo "Removing container and image..."
-sudo docker-compose rm -f football-api
-sudo docker rmi ball-script_football-api 2>/dev/null || true
+docker-compose rm -f football-api
+docker rmi ball-script_football-api 2>/dev/null || true
 
 # Show current server.js content for verification
 echo ""
@@ -18,10 +18,10 @@ head -150 server.js | grep -n "app.get\|app.post\|app.use"
 
 echo ""
 echo "Building fresh container..."
-sudo docker-compose build --no-cache football-api
+docker-compose build --no-cache football-api
 
 echo "Starting container..."
-sudo docker-compose up -d football-api
+docker-compose up -d football-api
 
 # Wait for startup
 sleep 10
@@ -37,7 +37,7 @@ curl -s http://localhost:8080/api/data/matches/today | head -5
 
 echo ""
 echo "3. Container logs:"
-sudo docker-compose logs --tail=20 football-api
+docker-compose logs --tail=20 football-api
 
 echo ""
 echo "4. Making actual test calls:"

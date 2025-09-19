@@ -1,0 +1,50 @@
+{
+  "wordpress": {
+    "wpSiteUrl": "https://ball7goal.com",
+    "username": "lnwzaseo@gmail.com",
+    "password": "ZOeO IXOZ E93s 1g1A trvh kytf",
+    "defaultCategory": "ข่าวฟุตบอล",
+    "defaultTags": ["ฟุตบอล", "กีฬา", "Kapook"],
+    "postStatus": "publish",
+    "authorId": 1
+  },
+  "scraping": {
+    "maxNewsPerRun": 2,
+    "scrapeInterval": 3600000,
+    "delayBetweenRequests": 2000,
+    "retryAttempts": 3
+  },
+  "database": {
+    "path": "./news-database.json",
+    "cleanupAfterDays": 30,
+    "backupInterval": 86400000
+  },
+  "notifications": {
+    "discordWebhook": "",
+    "lineNotify": "",
+    "email": {
+      "enabled": false,
+      "smtp": {
+        "host": "",
+        "port": 587,
+        "user": "",
+        "password": ""
+      },
+      "to": ""
+    }
+  },
+  "automation": {
+    "enabled": true,
+    "schedule": {
+      "enabled": true,
+      "cron": "0 */2 * * *",
+      "timezone": "Asia/Bangkok"
+    }
+  },
+  "logging": {
+    "level": "info",
+    "file": "./logs/news-automation.log",
+    "maxSize": "10MB",
+    "maxFiles": 5
+  }
+}

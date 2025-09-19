@@ -1,0 +1,386 @@
+const puppeteer = require('puppeteer-extra');
+const StealthPlugin = require('puppeteer-extra-plugin-stealth');
+
+// เพิ่ม stealth plugin
+puppeteer.use(StealthPlugin());
+
+class KapookNewsScraper {
+    constructor() {
+        this.browser = null;
+        this.page = null;
+        this.baseUrl = 'https://football.kapook.com';
+        this.newsListUrl = 'https://football.kapook.com/newslist.php';
+    }
+
+    async init() {
+        if (!this.browser) {
+            console.log('🚀 เริ่มต้น Puppeteer Browser สำหรับ Kapook News Scraper...');
+            this.browser = await puppeteer.launch({
+                headless: true,
+                args: [
+                    '--no-sandbox',
+                    '--disable-setuid-sandbox',
+                    '--disable-dev-shm-usage',
+                    '--disable-accelerated-2d-canvas',
+                    '--no-first-run',
+                    '--no-zygote',
+                    '--disable-gpu',
+                    '--disable-web-security',
+                    '--disable-features=VizDisplayCompositor'
+                ]
+                // ไม่ใส่ executablePath ให้ Puppeteer ใช้ Chrome ที่มาพร้อมกัน
+            });
+            console.log('✅ Kapook News Scraper Browser พร้อมใช้งาน');
+        }
+    }
+
+    async scrapeNewsList(maxNews = 10) {
+        try {
+            console.log('📰 กำลังดึงรายการข่าวจาก Kapook...');
+            console.log('🔍 URL เป้าหมาย:', this.newsListUrl);
+
+            if (!this.browser) {
+                await this.init();
+            }
+
+            this.page = await this.browser.newPage();
+
+            // ตั้งค่า user agent
+            await this.page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36');
+
+            // ไปที่หน้าข่าว
+            await this.page.goto(this.newsListUrl, {
+                waitUntil: 'networkidle0',
+                timeout: 30000
+            });
+            
+            // รอให้หน้าโหลดเสร็จ
+            await this.page.waitForSelector('body', { timeout: 10000 });
+            
+            // เพิ่ม delay เพื่อให้ JavaScript โหลดเสร็จ
+            await this.page.waitForTimeout(3000);
+            
+            console.log('📄 หน้าเว็บโหลดเสร็จแล้ว เริ่มค้นหาข่าว...');
+                waitUntil: 'domcontentloaded', // เปลี่ยนจาก networkidle2 เป็น domcontentloaded
+                timeout: 60000 // เพิ่ม timeout เป็น 60 วินาที
+            });
+
+            // รอให้หน้าโหลดเสร็จ
+            await new Promise(resolve => setTimeout(resolve, 3000));
+
+        // ดึงข่าวทั้งหมดจากหน้าแรก - เพิ่มการค้นหาหลายรูปแบบ
+        const newsItems = await page.evaluate(() => {
+            const items = [];
+            
+            // ลองหลายรูปแบบของ selector
+            const selectors = [
+                '.news-item',
+                '.article-item', 
+                '[class*="news"]',
+                '[class*="article"]',
+                '.list-news li',
+                '.news-list li',
+                'tr[onclick*="news-"]',
+                'a[href*="/news-"]'
+            ];
+            
+            let foundElements = [];
+            
+            // รวบรวม elements จากทุก selector
+            selectors.forEach(selector => {
+                const elements = document.querySelectorAll(selector);
+                foundElements.push(...Array.from(elements));
+            });
+            
+            // ลบ duplicate elements
+            foundElements = [...new Set(foundElements)];
+            
+            console.log(`พบ elements ทั้งหมด: ${foundElements.length}`);
+            
+            foundElements.forEach(element => {
+                // ลองหาชื่อข่าวจากหลายแหล่ง
+                let titleElement = element.querySelector('h2 a, h3 a, .title a, strong a, td a, span a');
+                let linkElement = element.querySelector('a[href*="/news-"]');
+                
+                // ถ้าไม่เจอ ลองดูว่า element นี้เป็น link เองไหม
+                if (!titleElement && element.tagName === 'A' && element.href.includes('/news-')) {
+                    titleElement = element;
+                    linkElement = element;
+                }
+                
+                // ถ้าไม่เจอ ลองดูใน parent element
+                if (!titleElement || !linkElement) {
+                    const parentElement = element.closest('tr, li, div');
+                    if (parentElement) {
+                        titleElement = titleElement || parentElement.querySelector('a[href*="/news-"]');
+                        linkElement = linkElement || parentElement.querySelector('a[href*="/news-"]');
+                    }
+                }
+                
+                if (titleElement && linkElement) {
+                    const title = titleElement.textContent.trim();
+                    let link = linkElement.href;
+                    
+                    // แปลง relative URL เป็น absolute URL
+                    if (link.startsWith('/')) {
+                        link = 'https://football.kapook.com' + link;
+                    }
+                    
+                    if (title && link && link.includes('/news-')) {
+                        const id = link.match(/news-(\d+)/)?.[1];
+                        if (id) {
+                            items.push({
+                                title: title,
+                                url: link,
+                                id: id
+                            });
+                        }
+                    }
+                }
+            });
+            
+            // ลบข่าวที่ซ้ำกัน (ตาม ID)
+            const uniqueItems = [];
+            const seenIds = new Set();
+            
+            items.forEach(item => {
+                if (!seenIds.has(item.id)) {
+                    seenIds.add(item.id);
+                    uniqueItems.push(item);
+                }
+            });
+            
+            console.log(`ข่าวทั้งหมดหลังลบซ้ำ: ${uniqueItems.length} รายการ`);
+            return uniqueItems;
+        });            console.log(`✅ พบข่าวทั้งหมด ${newsItems.length} รายการ`);
+        
+        // เพิ่มข้อมูลเวลาและจำกัดจำนวน (เพิ่มเป็น 10 รายการ)
+        const limitedNews = newsItems.slice(0, 10).map(item => ({
+            ...item,
+            scrapedAt: new Date().toISOString()
+        }));
+
+            return {
+                success: true,
+                count: newsItems.length,
+                news: newsItems,
+                scrapedAt: new Date().toISOString()
+            };
+
+        } catch (error) {
+            console.error('❌ Error scraping news list:', error.message);
+            return {
+                success: false,
+                error: error.message,
+                count: 0,
+                news: []
+            };
+        } finally {
+            if (this.page) {
+                await this.page.close();
+                this.page = null;
+            }
+        }
+    }
+
+    async scrapeNewsDetail(newsUrl) {
+        try {
+            console.log(`📖 กำลังดึงรายละเอียดข่าว: ${newsUrl}`);
+
+            if (!this.browser) {
+                await this.init();
+            }
+
+            const page = await this.browser.newPage();
+            await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36');
+
+            await page.goto(newsUrl, {
+                waitUntil: 'domcontentloaded', // เปลี่ยนจาก networkidle0 เป็น domcontentloaded
+                timeout: 60000 // เพิ่ม timeout เป็น 60 วินาที
+            });
+
+            await new Promise(resolve => setTimeout(resolve, 2000));
+
+            const newsDetail = await page.evaluate(() => {
+                // หาหัวข้อข่าว
+                const titleSelectors = ['h1', 'h2', '.title', '.news-title'];
+                let title = '';
+                for (const selector of titleSelectors) {
+                    const element = document.querySelector(selector);
+                    if (element && element.textContent?.trim()) {
+                        title = element.textContent.trim();
+                        break;
+                    }
+                }
+
+                // หาเนื้อหาข่าว - ใช้ .content ที่พบจากการทดสอบ
+                let content = '';
+                const contentElement = document.querySelector('.content');
+                if (contentElement) {
+                    // ลบ script, style tags ก่อน
+                    const scripts = contentElement.querySelectorAll('script, style, .bb_wrapper');
+                    scripts.forEach(el => el.remove());
+
+                    // ดึงเฉพาะ text content และทำความสะอาด
+                    content = contentElement.textContent?.trim() || '';
+
+                    // ทำความสะอาดข้อความ
+                    content = content
+                        .replace(/\s+/g, ' ') // ลดช่องว่างเกิน
+                        .replace(/\n{3,}/g, '\n\n') // ลดบรรทัดว่างเกิน
+                        .replace(/\.bb_wrapper.*?}/g, '') // ลบ CSS code
+                        .replace(/\{[^}]*\}/g, '') // ลบ CSS rules
+                        .replace(/\s*googletag\s*\.\s*cmd.*?$/gm, '') // ลบ Google tags
+                        .replace(/\s*\(\s*function.*?\).*?$/gm, '') // ลบ JavaScript
+                        .trim();
+                }
+
+                // หาวันที่
+                const dateSelectors = ['.date', '.time', 'time', '.publish-date'];
+                let publishDate = '';
+                for (const selector of dateSelectors) {
+                    const element = document.querySelector(selector);
+                    if (element && element.textContent?.trim()) {
+                        publishDate = element.textContent.trim();
+                        break;
+                    }
+                }
+
+                // หารูปภาพ - เฉพาะรูปข่าวจริงและเรียงตามความสำคัญ
+                const allImages = Array.from(document.querySelectorAll('img'))
+                    .map(img => ({
+                        src: img.src,
+                        alt: img.alt || '',
+                        className: img.className || '',
+                        width: img.width || 0,
+                        height: img.height || 0
+                    }))
+                    .filter(img => {
+                        if (!img.src) return false;
+
+                        // เอาเฉพาะรูปข่าวจาก cms/upload และกรองออกรูปที่ไม่ต้องการ
+                        if (!img.src.includes('football.kapook.com/cms/upload')) return false;
+
+                        // กรองออกรูปที่ไม่ต้องการ
+                        if (img.src.includes('logo') ||
+                            img.src.includes('svg') ||
+                            img.src.includes('truehits') ||
+                            img.src.includes('goggen.php') ||
+                            img.src.includes('ic-sv-') ||
+                            img.src.includes('banner') ||
+                            img.src.includes('icon')) return false;
+
+                        return true;
+                    })
+                    .sort((a, b) => {
+                        // เรียงตามความสำคัญ (รูปใหญ่ก่อน, รูปที่มี news ในชื่อก่อน)
+                        const aScore = (a.width * a.height) + 
+                                     (a.src.includes('/large/') ? 100000 : 0) +
+                                     (a.src.includes('news-') ? 50000 : 0);
+                        const bScore = (b.width * b.height) + 
+                                     (b.src.includes('/large/') ? 100000 : 0) +
+                                     (b.src.includes('news-') ? 50000 : 0);
+                        return bScore - aScore;
+                    });
+
+                const images = allImages.map(img => img.src).slice(0, 5); // เอาไว้ 5 รูป
+
+                return {
+                    title: title || '',
+                    content: content || '',
+                    publishDate: publishDate || '',
+                    images: images,
+                    url: window.location.href
+                };
+            });
+
+            await page.close();
+
+            console.log(`✅ ดึงรายละเอียดข่าวสำเร็จ: ${newsDetail.title.substring(0, 50)}...`);
+
+            return {
+                success: true,
+                data: newsDetail,
+                scrapedAt: new Date().toISOString()
+            };
+
+        } catch (error) {
+            console.error('❌ Error scraping news detail:', error.message);
+            return {
+                success: false,
+                error: error.message,
+                data: null
+            };
+        }
+    }
+
+    async scrapeNewsWithDetails(maxNews = 5) {
+        try {
+            console.log('🔄 เริ่มดึงข่าวพร้อมรายละเอียด...');
+
+            // ดึงรายการข่าวก่อน
+            const newsListResult = await this.scrapeNewsList(maxNews);
+
+            if (!newsListResult.success) {
+                return newsListResult;
+            }
+
+            const detailedNews = [];
+
+            // ดึงรายละเอียดของแต่ละข่าว
+            for (let i = 0; i < newsListResult.news.length; i++) {
+                const news = newsListResult.news[i];
+                console.log(`📖 [${i + 1}/${newsListResult.news.length}] กำลังดึง: ${news.title.substring(0, 50)}...`);
+
+                const detailResult = await this.scrapeNewsDetail(news.url);
+
+                if (detailResult.success) {
+                    detailedNews.push({
+                        ...news,
+                        ...detailResult.data,
+                        scrapedAt: detailResult.scrapedAt
+                    });
+                } else {
+                    // ถ้าดึงรายละเอียดไม่ได้ ให้เก็บข้อมูลพื้นฐาน
+                    detailedNews.push({
+                        ...news,
+                        content: '',
+                        images: [],
+                        error: detailResult.error
+                    });
+                }
+
+                // รอสักครู่ระหว่างการดึงข่าว
+                await new Promise(resolve => setTimeout(resolve, 2000));
+            }
+
+            console.log(`✅ ดึงข่าวพร้อมรายละเอียดเสร็จสิ้น: ${detailedNews.length} รายการ`);
+
+            return {
+                success: true,
+                count: detailedNews.length,
+                news: detailedNews,
+                scrapedAt: new Date().toISOString()
+            };
+
+        } catch (error) {
+            console.error('❌ Error scraping news with details:', error.message);
+            return {
+                success: false,
+                error: error.message,
+                count: 0,
+                news: []
+            };
+        }
+    }
+
+    async close() {
+        if (this.browser) {
+            await this.browser.close();
+            this.browser = null;
+            console.log('🔒 ปิด Kapook News Scraper Browser');
+        }
+    }
+}
+
+module.exports = KapookNewsScraper;
