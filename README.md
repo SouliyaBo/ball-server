@@ -1,6 +1,144 @@
-# ระบบดูผลบอลสด ⚽
+# 🏈 Football Data API Server
 
-สคริปต์นี้ใช้สำหรับดึงข้อมูลผลการแข่งขันฟุตบอลจากเว็บ football-dw3.pages.dev และแสดงผลในรูปแบบที่สวยงาม
+Real-time football match data extraction API server รองรับทั้ง macOS และ Ubuntu
+
+## 📋 Prerequisites
+
+### Ubuntu/Linux
+- Ubuntu 18.04+ or similar Linux distribution
+- Node.js 18.0.0+
+- Google Chrome (จะติดตั้งอัตโนมัติ)
+
+### macOS
+- macOS 10.14+
+- Node.js 18.0.0+
+- Google Chrome
+
+## 🚀 Quick Start (Ubuntu)
+
+### วิธี 1: ใช้ Setup Script (แนะนำ)
+```bash
+# Clone repository
+git clone https://github.com/SouliyaBo/ball-server.git
+cd ball-server
+
+# รัน setup script สำหรับ Ubuntu
+chmod +x ubuntu-setup.sh
+./ubuntu-setup.sh
+
+# รัน server
+npm start
+```
+
+### วิธี 2: Manual Installation
+```bash
+# 1. Update system
+sudo apt update && sudo apt upgrade -y
+
+# 2. Install Node.js 20
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt install -y nodejs
+
+# 3. Install Google Chrome
+wget -q -O - https://dl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
+sudo sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list'
+sudo apt update
+sudo apt install -y google-chrome-stable
+
+# 4. Install dependencies
+sudo apt install -y \
+    libasound2 libatk1.0-0 libcairo-gobject2 \
+    libcups2 libdbus-1-3 libexpat1 libfontconfig1 \
+    libgconf-2-4 libgdk-pixbuf2.0-0 libglib2.0-0 \
+    libgtk-3-0 libnspr4 libpango-1.0-0 libxss1 \
+    fonts-liberation libappindicator1 libnss3 \
+    lsb-release xdg-utils
+
+# 5. Clone และ install
+git clone https://github.com/SouliyaBo/ball-server.git
+cd ball-server
+npm install
+
+# 6. รัน server
+npm start
+```
+
+## 🔧 การใช้งาน
+
+### รัน Server
+```bash
+# Development mode
+npm run dev
+
+# Production mode
+npm start
+
+# Test extractor
+npm test
+```
+
+### PM2 (Production)
+```bash
+# Install PM2 globally
+npm install -g pm2
+
+# Start with PM2
+npm run pm2:start
+
+# Check status
+pm2 status
+
+# View logs
+npm run pm2:logs
+
+# Restart
+npm run pm2:restart
+
+# Stop
+npm run pm2:stop
+```
+
+## 🌐 API Endpoints
+
+- **Health Check:** `GET /api/health`
+- **Server Status:** `GET /api/status`
+- **Today's Matches:** `GET /api/data/matches/today`
+- **API Documentation:** `GET /`
+
+### ตัวอย่างการใช้งาน
+```bash
+# Health check
+curl http://localhost:8080/api/health
+
+# ดึงข้อมูลแมตช์วันนี้
+curl http://localhost:8080/api/data/matches/today | jq .
+
+# ตรวจสอบสถานะ server
+curl http://localhost:8080/api/status
+```
+
+## 📊 Response Format
+
+```json
+{
+  "success": true,
+  "date": "2025-09-28",
+  "totalMatches": 409,
+  "matches": [
+    {
+      "id": 1,
+      "homeTeam": "Liverpool",
+      "awayTeam": "Manchester City",
+      "time": "18:30",
+      "date": "28/09/2025",
+      "league": "Premier League",
+      "homeTeamLogo": "https://...",
+      "awayTeamLogo": "https://..."
+    }
+  ],
+  "timestamp": "2025-09-28T10:00:00.000Z"
+}
+```
 
 ## 🚀 วิธีติดตั้ง
 

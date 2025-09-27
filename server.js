@@ -1,6 +1,6 @@
 const express = require('express');
-const PuppeteerFootballClient = require('./PuppeteerFootballClient');
-const PuppeteerProgramScraper = require('./PuppeteerProgramScraper');
+// const PuppeteerFootballClient = require('./PuppeteerFootballClient');
+// const PuppeteerProgramScraper = require('./PuppeteerProgramScraper');
 const PuppeteerDataExtractor = require('./PuppeteerDataExtractor');
 
 const app = express();
@@ -29,9 +29,10 @@ app.use((req, res, next) => {
 app.use(express.json());
 
 // สร้าง instances
-const apiClient = new PuppeteerFootballClient();
-const programScraper = new PuppeteerProgramScraper();
-const dataExtractor = new PuppeteerDataExtractor();
+// const apiClient = new PuppeteerFootballClient();
+// const programScraper = new PuppeteerProgramScraper();
+// ไม่สร้าง instance ล่วงหน้า เพื่อป้องกัน detached frame
+// const dataExtractor = new PuppeteerDataExtractor();
 
 // เพิ่ม simple cache
 const dataCache = new Map();
@@ -131,6 +132,9 @@ app.get('/api/data/matches/today', async (req, res) => {
 
         console.log('🔍 กำลังดึงข้อมูลแมตช์วันนี้จากเว็บไซต์จริง...');
 
+        // สร้าง dataExtractor ใหม่ทุกครั้งเพื่อป้องกัน detached frame
+        const dataExtractor = new PuppeteerDataExtractor();
+
         // ใช้ dataExtractor เพื่อดึงข้อมูลจริง
         const extractResult = await dataExtractor.extractMatchData();
 
@@ -163,7 +167,6 @@ app.get('/api/data/matches/today', async (req, res) => {
         } else {
             throw new Error(extractResult.error || 'ไม่สามารถดึงข้อมูลได้');
         }
-
     } catch (error) {
         console.error('❌ Error fetching today matches:', error.message);
         res.status(500).json({

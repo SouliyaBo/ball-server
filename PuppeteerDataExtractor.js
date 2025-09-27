@@ -6,8 +6,7 @@ puppeteer.use(StealthPlugin());
 
 class PuppeteerDataExtractor {
     constructor() {
-        this.browser = null;
-        this.page = null;
+        // เอา browser และ page ออก เพื่อให้แต่ละ request สร้างใหม่
     }
 
     async init() {
@@ -55,44 +54,120 @@ class PuppeteerDataExtractor {
                     '--disable-dev-shm-usage',
                     '--single-process'
                 ],
-                executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/google-chrome-stable'
+                // executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/google-chrome-stable'
+                // ให้ Puppeteer หา Chrome เอง
             });
             console.log('✅ Puppeteer Browser พร้อมใช้งานสำหรับ Data Extraction');
         }
     }
 
     async extractMatchData(url = 'https://football-dw3.pages.dev/program/') {
+        let browser = null;
+        let page = null;
+
         try {
-            await this.init();
+            console.log('📊 กำลังดึงข้อมูลแมตช์จาก:', url);
 
-            // ใช้ page เดิมถ้ามี แทนการปิดและสร้างใหม่
-            if (!this.page) {
-                this.page = await this.browser.newPage();
-
-                // ตั้งค่า User Agent
-                await this.page.setUserAgent('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
-
-                // ตั้งค่า viewport
-                await this.page.setViewport({ width: 1920, height: 1080 });
-            }
-
-            // ตั้งค่า timeout ให้เร็วขึ้น
-            await this.page.setDefaultNavigationTimeout(15000);
-            await this.page.setDefaultTimeout(15000);
-
-            console.log(`📊 กำลังดึงข้อมูลแมตช์จาก: ${url}`);
-
-            // เข้าสู่หน้าเว็บ - ใช้ domcontentloaded แทน networkidle2
-            await this.page.goto(url, {
-                waitUntil: 'domcontentloaded',
-                timeout: 15000
+            // สร้าง browser ใหม่ทุกครั้งเพื่อป้องกัน detached frame
+            console.log('🚀 เริ่มต้น Puppeteer Browser สำหรับ Data Extraction...');
+            browser = await puppeteer.launch({
+                headless: true,
+                args: [
+                    '--no-sandbox',
+                    '--disable-setuid-sandbox',
+                    '--disable-dev-shm-usage',
+                    '--disable-accelerated-2d-canvas',
+                    '--no-first-run',
+                    '--no-zygote',
+                    '--disable-gpu',
+                    '--disable-web-security',
+                    '--disable-features=VizDisplayCompositor',
+                    '--run-all-compositor-stages-before-draw',
+                    '--disable-background-timer-throttling',
+                    '--disable-renderer-backgrounding',
+                    '--disable-backgrounding-occluded-windows',
+                    '--disable-ipc-flooding-protection',
+                    '--disable-extensions',
+                    '--disable-default-apps',
+                    '--disable-sync',
+                    '--disable-translate',
+                    '--hide-scrollbars',
+                    '--mute-audio',
+                    '--no-default-browser-check',
+                    '--no-first-run',
+                    '--disable-background-networking',
+                    '--disable-background-timer-throttling',
+                    '--disable-client-side-phishing-detection',
+                    '--disable-default-apps',
+                    '--disable-hang-monitor',
+                    '--disable-popup-blocking',
+                    '--disable-prompt-on-repost',
+                    '--disable-sync',
+                    '--disable-web-resources',
+                    '--metrics-recording-only',
+                    '--no-default-browser-check',
+                    '--no-first-run',
+                    '--password-store=basic',
+                    '--use-mock-keychain',
+                    '--disable-dev-shm-usage',
+                    '--single-process'
+                ],
+                // ให้ Puppeteer หา Chrome เอง
             });
 
-            // ลดเวลารอจาก 5 วินาที เหลือ 2 วินาที
-            await new Promise(resolve => setTimeout(resolve, 2000));
+            console.log('✅ Puppeteer Browser พร้อมใช้งานสำหรับ Data Extraction');
 
-            // ดึงข้อมูลแมตช์ทั้งหมด
-            const matchesData = await this.page.evaluate(() => {
+            page = await browser.newPage();
+
+            // ตั้งค่า User Agent - รองรับทั้ง macOS และ Linux
+            const userAgent = process.platform === 'darwin' 
+                ? 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+                : 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
+            await page.setUserAgent(userAgent);
+
+            // ตั้งค่า viewport
+            await page.setViewport({ width: 1920, height: 1080 });
+
+            // ตั้งค่า timeout ให้เร็วขึ้น
+            await page.setDefaultNavigationTimeout(30000);
+            await page.setDefaultTimeout(30000);
+
+            console.log('🔄 เริ่มเข้าสู่หน้าเว็บ...');
+
+            // เข้าสู่หน้าเว็บ - รอให้โหลดเสร็จดี
+            await page.goto(url, {
+                waitUntil: ['domcontentloaded', 'networkidle0'],
+                timeout: 30000
+            });
+
+            console.log('✅ หน้าเว็บโหลดเสร็จแล้ว, รอให้ content โหลดเสร็จ...');
+
+            // รอให้ dynamic content โหลด
+            await page.waitForSelector('body', { timeout: 10000 });
+
+            // รอให้ content โหลดเสร็จ
+            await new Promise(resolve => setTimeout(resolve, 3000));
+
+            console.log('🔍 เริ่มดึงข้อมูลแมตช์...');
+
+            // ตรวจสอบ page state ก่อนดึงข้อมูล
+            const pageUrl = await page.url();
+            console.log(`✅ Page URL: ${pageUrl}`);
+
+            if (page.isClosed()) {
+                throw new Error('Page is closed');
+            }
+
+            // ดึงข้อมูลแมตช์ทั้งหมด - ใช้ try-catch เพิ่มเติม
+            let matchesData;
+            let retryCount = 0;
+            const maxRetries = 3;
+
+            while (retryCount < maxRetries) {
+                try {
+                    console.log(`🔄 Attempt ${retryCount + 1}/${maxRetries} to extract data...`);
+
+                    matchesData = await page.evaluate(() => {
                 const matches = [];
 
                 console.log('🔍 เริ่มต้นค้นหาแมตช์และลีก...');
@@ -349,6 +424,25 @@ class PuppeteerDataExtractor {
                 return matches;
             });
 
+                    break; // ถ้า evaluate สำเร็จ ให้ออกจาก loop
+                } catch (evaluateError) {
+                    console.error(`❌ Attempt ${retryCount + 1} failed:`, evaluateError.message);
+                    retryCount++;
+
+                    if (retryCount >= maxRetries) {
+                        throw new Error(`Failed after ${maxRetries} attempts: ${evaluateError.message}`);
+                    }
+
+                    // รอ 1 วินาทีก่อนลองใหม่
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+
+                    // ตรวจสอบ page state อีกครั้ง
+                    if (page.isClosed()) {
+                        throw new Error('Page is closed during retry');
+                    }
+                }
+            }
+
             console.log(`✅ ดึงข้อมูลแมตช์สำเร็จ: ${matchesData.length} แมตช์`);
 
             // ลบข้อมูลซ้ำ (เอาเฉพาะ desktop version)
@@ -391,6 +485,23 @@ class PuppeteerDataExtractor {
                 extractedAt: new Date().toISOString(),
                 source: url
             };
+        } finally {
+            // ปิด browser ที่สร้างในฟังก์ชันนี้
+            if (page) {
+                try {
+                    await page.close();
+                } catch (e) {
+                    console.error('Error closing page:', e);
+                }
+            }
+            if (browser) {
+                try {
+                    await browser.close();
+                    console.log('🔒 ปิด Puppeteer Browser หลังดึงข้อมูล');
+                } catch (e) {
+                    console.error('Error closing browser:', e);
+                }
+            }
         }
     }
 

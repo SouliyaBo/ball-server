@@ -220,13 +220,39 @@ class KapookNewsScraper {
                 let content = '';
                 for (const selector of contentSelectors) {
                     const element = document.querySelector(selector);
-                    if (element && element.textContent.trim()) {
-                        content = element.textContent.trim();
-                        break;
-                    }
-                }
+                    if (element) {
+                        // ลบ script tags, style tags และ HTML tags อื่นๆ
+                        const clonedElement = element.cloneNode(true);
 
-                // ดึงรูปภาพทั้งหมด
+                        // ลบ elements ที่ไม่ต้องการ
+                        const unwantedSelectors = [
+                            'script', 'style', 'noscript', 'iframe',
+                            '.ad', '.ads', '.advertisement', '.banner',
+                            '.social', '.share', '.widget', '.sidebar',
+                            '[class*="ad-"]', '[id*="ad-"]',
+                            'googletag', '[class*="google"]'
+                        ];
+
+                        unwantedSelectors.forEach(sel => {
+                            const elements = clonedElement.querySelectorAll(sel);
+                            elements.forEach(el => el.remove());
+                        });
+
+                        // ดึงเฉพาะ text content และทำความสะอาด
+                        content = clonedElement.textContent || clonedElement.innerText || '';
+                        content = content
+                            .replace(/\s+/g, ' ') // รวม whitespace หลายตัวเป็น 1
+                            .replace(/[\r\n\t]/g, ' ') // แปลง newline และ tab เป็น space
+                            .replace(/googletag\.cmd\.push.*?}\);/g, '') // ลบ googletag
+                            .replace(/window\._taboola.*?}\);/g, '') // ลบ taboola
+                            .replace(/\{[^}]*display.*?[^}]*\}/g, '') // ลบ CSS-like content
+                            .trim();
+
+                        if (content && content.length > 100) { // เอาเฉพาะ content ที่มีความยาวพอสมควร
+                            break;
+                        }
+                    }
+                }                // ดึงรูปภาพทั้งหมด
                 const images = [];
                 const imgElements = document.querySelectorAll('img');
 
@@ -313,7 +339,7 @@ class KapookNewsScraper {
         }
     }
 
-    async scrapeNewsWithDetails(maxNews = 2) {
+    async scrapeNewsWithDetails(maxNews = 10) {
         try {
             console.log('🔄 เริ่มดึงข่าวพร้อมรายละเอียด...');
 

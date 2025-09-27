@@ -14,6 +14,29 @@ class WordPressPublisher {
         console.log(`🔧 WordPress Publisher เชื่อมต่อกับ: ${this.wpSiteUrl}`);
     }
 
+    // ฟังก์ชันทำความสะอาดเนื้อหา
+    cleanContent(content) {
+        if (!content) return '';
+
+        return content
+            // ลบ HTML tags
+            .replace(/<[^>]*>/g, '')
+            // ลบ CSS/JavaScript code
+            .replace(/\{[^}]*display[^}]*\}/g, '')
+            .replace(/googletag\.cmd\.push.*?}\);/g, '')
+            .replace(/window\._taboola.*?}\);/g, '')
+            .replace(/taboola\.push.*?}\);/g, '')
+            // ลบ special characters และ control characters
+            .replace(/[\x00-\x1F\x7F-\x9F]/g, '')
+            // ลบ whitespace ส่วนเกิน
+            .replace(/\s+/g, ' ')
+            .replace(/\n\s*\n/g, '\n')
+            // ทำความสะอาด quotes
+            .replace(/[""]/g, '"')
+            .replace(/['']/g, "'")
+            .trim();
+    }
+
     async testConnection() {
         try {
             console.log('🔗 ทดสอบการเชื่อมต่อ WordPress...');
@@ -87,7 +110,8 @@ class WordPressPublisher {
             console.log(`📝 กำลังสร้างโพสต์: ${newsData.title.substring(0, 50)}...`);
 
             let featuredMediaId = null;
-            let postContent = newsData.content || '';
+            // ทำความสะอาดเนื้อหาก่อนโพสต์
+            let postContent = this.cleanContent(newsData.content || '');
 
             // อัพโหลดรูปภาพหลัก (ถ้ามี)
             if (newsData.images && newsData.images.length > 0) {
@@ -118,13 +142,22 @@ class WordPressPublisher {
                 tagIds = await this.getOrCreateTags(options.tags);
             }
 
+            // แปลง category เป็น ID
+            let categoryIds = [];
+            if (options.category) {
+                const categoryId = await this.getOrCreateCategory(options.category);
+                if (categoryId) {
+                    categoryIds.push(categoryId);
+                }
+            }
+
             // สร้างโพสต์
             const postData = {
-                title: newsData.title,
+                title: this.cleanContent(newsData.title), // ทำความสะอาด title ด้วย
                 content: postContent,
                 status: options.status || 'publish', // draft หรือ publish
                 author: options.authorId || 1,
-                categories: options.categories || [], // array ของ category IDs
+                categories: categoryIds, // array ของ category IDs
                 tags: tagIds, // array ของ tag IDs (แปลงแล้ว)
                 featured_media: featuredMediaId,
                 meta: {
@@ -312,6 +345,36 @@ class WordPressPublisher {
 
         } catch (error) {
             console.error('❌ การสร้างหมวดหมู่ล้มเหลว:', error.response?.data || error.message);
+            return null;
+        }
+    }
+
+    async getOrCreateCategory(categoryName) {
+        try {
+            // ดึงหมวดหมู่ทั้งหมด
+            const categories = await this.getCategories();
+
+            // หาหมวดหมู่ที่ต้องการ
+            const existingCategory = categories.find(cat =>
+                cat.name.toLowerCase() === categoryName.toLowerCase()
+            );
+
+            if (existingCategory) {
+                console.log(`🏷️  ใช้หมวดหมู่ที่มีอยู่: ${existingCategory.name} (ID: ${existingCategory.id})`);
+                return existingCategory.id;
+            }
+
+            // สร้างหมวดหมู่ใหม่ถ้าไม่มี
+            const newCategory = await this.createCategory(categoryName);
+            if (newCategory) {
+                console.log(`🆕 สร้างหมวดหมู่ใหม่: ${newCategory.name} (ID: ${newCategory.id})`);
+                return newCategory.id;
+            }
+
+            return null;
+
+        } catch (error) {
+            console.error('❌ Error getting or creating category:', error.message);
             return null;
         }
     }

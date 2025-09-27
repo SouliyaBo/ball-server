@@ -1,29 +1,29 @@
 {
   "publishedNews": [
     {
-      "kapookId": "42254",
-      "title": "ยูฟ่า แชมเปี้ยนส์ ลีก : แมนซิตี้ 2-0 นาโปลี",
-      "originalUrl": "https://football.kapook.com/news-42254",
-      "wpPostId": 616,
-      "wpPostUrl": "https://ball7goal.com/%e0%b8%a2%e0%b8%b9%e0%b8%9f%e0%b9%88%e0%b8%b2-%e0%b9%81%e0%b8%8a%e0%b8%a1%e0%b9%80%e0%b8%9b%e0%b8%b5%e0%b9%89%e0%b8%a2%e0%b8%99%e0%b8%aa%e0%b9%8c-%e0%b8%a5%e0%b8%b5%e0%b8%81-%e0%b9%81%e0%b8%a1/",
-      "publishedAt": "2025-09-19T02:58:17.584Z",
-      "scrapedAt": "2025-09-19T02:57:55.658Z"
+      "kapookId": "42261",
+      "title": "พรีเมียร์ลีก อังกฤษ : แมนยู 2-1 เชลซี",
+      "originalUrl": "https://football.kapook.com/news-42261",
+      "wpPostId": 655,
+      "wpPostUrl": "https://ball7goal.com/%e0%b8%9e%e0%b8%a3%e0%b8%b5%e0%b9%80%e0%b8%a1%e0%b8%b5%e0%b8%a2%e0%b8%a3%e0%b9%8c%e0%b8%a5%e0%b8%b5%e0%b8%81-%e0%b8%ad%e0%b8%b1%e0%b8%87%e0%b8%81%e0%b8%a4%e0%b8%a9-%e0%b9%81%e0%b8%a1%e0%b8%99/",
+      "publishedAt": "2025-09-20T21:53:30.639Z",
+      "scrapedAt": "2025-09-20T21:53:03.413Z"
     },
     {
-      "kapookId": "42243",
-      "title": "หงส์ อย่าชิล !! แมนซิตี้ ลั่นกลองรบพร้อมแย่งนักเตะรายนี้กับ ลิเวอร์พูล",
-      "originalUrl": "https://football.kapook.com/news-42243",
-      "wpPostId": 619,
-      "wpPostUrl": "https://ball7goal.com/%e0%b8%ab%e0%b8%87%e0%b8%aa%e0%b9%8c-%e0%b8%ad%e0%b8%a2%e0%b9%88%e0%b8%b2%e0%b8%8a%e0%b8%b4%e0%b8%a5-%e0%b9%81%e0%b8%a1%e0%b8%99%e0%b8%8b%e0%b8%b4%e0%b8%95%e0%b8%b5%e0%b9%89-%e0%b8%a5%e0%b8%b1-2/",
-      "publishedAt": "2025-09-19T02:58:17.585Z",
-      "scrapedAt": "2025-09-19T02:57:55.663Z"
+      "kapookId": "42257",
+      "title": "ไบรอัน ร็อบสัน แนะ สตีเว่น เจอร์ราร์ด จะเหมาะมากหากเลือกไปคุมสโมสรนี้",
+      "originalUrl": "https://football.kapook.com/news-42257",
+      "wpPostId": 658,
+      "wpPostUrl": "https://ball7goal.com/%e0%b9%84%e0%b8%9a%e0%b8%a3%e0%b8%ad%e0%b8%b1%e0%b8%99-%e0%b8%a3%e0%b9%87%e0%b8%ad%e0%b8%9a%e0%b8%aa%e0%b8%b1%e0%b8%99-%e0%b9%81%e0%b8%99%e0%b8%b0-%e0%b8%aa%e0%b8%95%e0%b8%b5%e0%b9%80%e0%b8%a7-4/",
+      "publishedAt": "2025-09-20T21:53:30.645Z",
+      "scrapedAt": "2025-09-20T21:53:03.459Z"
     }
   ],
-  "lastScrape": "2025-09-19T02:58:17.586Z",
+  "lastScrape": "2025-09-20T21:53:30.646Z",
   "stats": {
-    "totalScraped": 2,
+    "totalScraped": 3,
     "totalPublished": 4,
-    "totalSkipped": 0,
+    "totalSkipped": 1,
     "totalFailed": 0
   }
 }

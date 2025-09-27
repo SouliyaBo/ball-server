@@ -108,8 +108,8 @@ class NewsAutomation {
             const wpOptions = {
                 status: this.config.wordpress.postStatus,
                 authorId: this.config.wordpress.authorId,
-                categories: await this.getOrCreateCategories(),
-                tags: await this.getOrCreateTags()
+                category: this.config.wordpress.defaultCategory,
+                tags: this.config.wordpress.defaultTags
             };
 
             // โพสต์ข่าวไป WordPress

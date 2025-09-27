@@ -3,13 +3,13 @@
     "wpSiteUrl": "https://ball7goal.com",
     "username": "lnwzaseo@gmail.com",
     "password": "ZOeO IXOZ E93s 1g1A trvh kytf",
-    "defaultCategory": "ข่าวฟุตบอล",
+    "defaultCategory": "ข่าวบอล",
     "defaultTags": ["ฟุตบอล", "กีฬา", "Kapook"],
     "postStatus": "publish",
     "authorId": 1
   },
   "scraping": {
-    "maxNewsPerRun": 2,
+    "maxNewsPerRun": 10,
     "scrapeInterval": 3600000,
     "delayBetweenRequests": 2000,
     "retryAttempts": 3
