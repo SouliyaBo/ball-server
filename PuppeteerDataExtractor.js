@@ -120,7 +120,7 @@ class PuppeteerDataExtractor {
             page = await browser.newPage();
 
             // ตั้งค่า User Agent - รองรับทั้ง macOS และ Linux
-            const userAgent = process.platform === 'darwin' 
+            const userAgent = process.platform === 'darwin'
                 ? 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
                 : 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
             await page.setUserAgent(userAgent);

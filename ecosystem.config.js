@@ -24,17 +24,17 @@ module.exports = {
     out_file: './logs/out.log',
     error_file: './logs/error.log',
     log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
-    
+
     // Auto restart
     max_restarts: 10,
     min_uptime: '10s',
     max_memory_restart: '500M',
-    
+
     // Graceful shutdown
     kill_timeout: 5000,
     wait_ready: true,
     listen_timeout: 10000,
-    
+
     // Health monitoring
     health_check_grace_period: 3000
   }]
