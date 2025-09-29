@@ -261,7 +261,6 @@ app.listen(PORT, HOST, () => {
     console.log('   • Pure API server');
     console.log('   • Real-time data extraction');
     console.log('   • EC2 Ready - รับ connection จากภายนอก');
-    console.log('');
 });
 
 module.exports = app;
