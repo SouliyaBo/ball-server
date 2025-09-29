@@ -4,7 +4,7 @@ const express = require('express');
 const PuppeteerDataExtractor = require('./PuppeteerDataExtractor');
 
 const app = express();
-const PORT = 8080;
+// PORT จะถูกประกาศในส่วนท้ายของไฟล์
 
 // Middleware
 app.use((req, res, next) => {
@@ -240,21 +240,27 @@ app.get('/api/data/matches/date/:offset', async (req, res) => {
 });
 
 // เริ่มเซิร์ฟเวอร์
-app.listen(PORT, () => {
+const PORT = process.env.PORT || 8080;
+const HOST = process.env.HOST || '0.0.0.0'; // รับ connection จากทุก IP
+
+app.listen(PORT, HOST, () => {
     console.log('');
     console.log('🚀 Football Data API Server (Simple) เริ่มทำงานแล้ว!');
     console.log('');
-    console.log(`🌐 API Endpoint: http://localhost:${PORT}`);
-    console.log(`📚 API Documentation: http://localhost:${PORT}/`);
-    console.log(`🏥 Health Check: http://localhost:${PORT}/api/health`);
-    console.log(`📊 Status: http://localhost:${PORT}/api/status`);
-    console.log(`🧪 Test: http://localhost:${PORT}/api/test`);
+    console.log(`🌐 Local: http://localhost:${PORT}`);
+    console.log(`🌍 External: http://YOUR_EC2_IP:${PORT}`);
+    console.log(`📚 API Documentation: http://${HOST === '0.0.0.0' ? 'YOUR_EC2_IP' : HOST}:${PORT}/`);
+    console.log(`🏥 Health Check: http://${HOST === '0.0.0.0' ? 'YOUR_EC2_IP' : HOST}:${PORT}/api/health`);
+    console.log(`📊 Status: http://${HOST === '0.0.0.0' ? 'YOUR_EC2_IP' : HOST}:${PORT}/api/status`);
+    console.log(`🧪 Test: http://${HOST === '0.0.0.0' ? 'YOUR_EC2_IP' : HOST}:${PORT}/api/test`);
+    console.log(`⚡ Matches API: http://${HOST === '0.0.0.0' ? 'YOUR_EC2_IP' : HOST}:${PORT}/api/data/matches/today`);
     console.log('');
     console.log('⚡ Features:');
     console.log('   • CORS enabled - เรียกใช้จากเว็บไซต์อื่นได้');
     console.log('   • Auto Cache - ข้อมูลถูก cache 2 นาที');
     console.log('   • Pure API server');
     console.log('   • Real-time data extraction');
+    console.log('   • EC2 Ready - รับ connection จากภายนอก');
     console.log('');
 });
 
