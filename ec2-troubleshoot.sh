@@ -5,11 +5,23 @@
 echo "🔍 EC2 Football API Troubleshooting"
 echo "================================="
 
+# Check disk space first
+echo "💾 Disk Space:"
+df -h
+echo ""
+AVAILABLE_SPACE=$(df / | awk 'NR==2 {print $4}' | sed 's/[^0-9]//g')
+if [ "$AVAILABLE_SPACE" -lt 1000000 ]; then  # น้อยกว่า 1GB
+    echo "⚠️ WARNING: Low disk space! Available: $(df -h / | awk 'NR==2 {print $4}')"
+    echo "💡 Solution: Run 'sudo apt clean && sudo apt autoremove -y'"
+    echo ""
+fi
+
 # Check system info
 echo "📊 System Information:"
-echo "OS: $(lsb_release -d | cut -f2)"
+echo "OS: $(lsb_release -d | cut -f2 2>/dev/null || echo 'Unknown')"
 echo "Architecture: $(uname -m)"
 echo "Memory: $(free -h | grep Mem | awk '{print $2}')"
+echo "Load Average: $(uptime | cut -d',' -f3-5)"
 echo ""
 
 # Check Node.js
